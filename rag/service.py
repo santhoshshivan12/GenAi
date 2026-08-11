@@ -16,8 +16,10 @@ from rag.config import DEFAULT_CHUNK_OVERLAP, DEFAULT_CHUNK_SIZE, DEFAULT_SCORE_
 from rag.embeddings import EmbeddingBackend
 from rag.env import load_env_file
 from rag.models import ChunkRecord, DocumentRecord
+from rag.prompts import answer_examples, answer_system_prompt, retrieval_system_prompt
 from rag.retriever import Retriever
 from rag.store import LocalStore
+from rag.structured import RAGAnswer, parse_rag_answer
 from rag.utils import chunk_text, clean_text, ensure_dirs, snippet, slugify_filename
 
 
@@ -168,7 +170,39 @@ class RAGService:
         }
 
     def _answer_one(self, question: str, top_k: int = 4, debug: bool = False) -> dict[str, Any]:
-        hits = self.retriever.search(question, top_k=top_k)
+        question = question.strip()
+        if not question:
+            payload = {
+                "question": question,
+                "answer": "Invalid question.",
+                "sources": [],
+                "source_pages": [],
+                "context": [],
+                "chunks": [],
+                "used_llm": False,
+                "structured_answer": None,
+            }
+            if debug:
+                payload["debug"] = {"reason": "blank_question"}
+            return payload
+
+        if len(question) > 2000:
+            payload = {
+                "question": question,
+                "answer": "Invalid question.",
+                "sources": [],
+                "source_pages": [],
+                "context": [],
+                "chunks": [],
+                "used_llm": False,
+                "structured_answer": None,
+            }
+            if debug:
+                payload["debug"] = {"reason": "question_too_long", "max_length": 2000}
+            return payload
+
+        retrieval = self._retrieve_hits_for_question(question, top_k=top_k, debug=debug)
+        hits = retrieval["hits"]
         if not hits:
             payload = {
                 "question": question,
@@ -178,6 +212,7 @@ class RAGService:
                 "context": [],
                 "chunks": [],
                 "used_llm": False,
+                "structured_answer": None,
             }
             if debug:
                 payload["debug"] = {
@@ -197,6 +232,7 @@ class RAGService:
                 "context": [],
                 "chunks": hits,
                 "used_llm": False,
+                "structured_answer": None,
             }
             if debug:
                 payload["debug"] = {
@@ -205,26 +241,40 @@ class RAGService:
                     "best_score": best_score,
                     "top_k": top_k,
                     "top_hits": self._debug_hits(hits),
+                    "retrieval": retrieval,
                 }
             return payload
 
-        sources = self._build_sources(hits)
         context_blocks = self._build_context_blocks(hits)
-        source_pages = self._extract_source_pages(hits)
-        llm_answer = self._generate_answer_with_llm(question, context_blocks)
-        used_llm = llm_answer is not None
-        answer_text = llm_answer
-        if answer_text is None:
-            answer_text = self._build_local_answer(question, hits)
+        model_name = self._active_model_name()
+        context_text, included_blocks = self._build_context_within_budget(question, context_blocks, model_name)
+        included_hits = self._blocks_to_chunk_hits(included_blocks)
+        sources = self._build_sources_from_blocks(included_blocks)
+        source_pages = self._extract_source_pages_from_blocks(included_blocks)
 
-        payload = {
+        structured_answer, structured_debug = self._generate_structured_answer(
+            question=question,
+            context_blocks=included_blocks,
+            context_text=context_text,
+            debug=debug,
+        )
+
+        if structured_answer is None:
+            answer_text = self._build_local_answer(question, included_hits)
+            used_llm = False
+        else:
+            answer_text = structured_answer.answer
+            used_llm = True
+
+        payload: dict[str, Any] = {
             "question": question,
             "answer": answer_text,
             "sources": sources,
             "source_pages": source_pages,
-            "context": context_blocks,
-            "chunks": hits,
+            "context": included_blocks,
+            "chunks": included_hits,
             "used_llm": used_llm,
+            "structured_answer": structured_answer.to_dict() if structured_answer is not None else None,
         }
         if debug:
             payload["debug"] = {
@@ -232,9 +282,90 @@ class RAGService:
                 "best_score": best_score,
                 "top_k": top_k,
                 "top_hits": self._debug_hits(hits),
-                "context_text": self._build_context(context_blocks),
+                "context_text": context_text,
+                "context_budget": self._context_budget_debug(
+                    question=question,
+                    model=model_name,
+                    all_blocks=context_blocks,
+                    included_blocks=included_blocks,
+                    context_text=context_text,
+                ),
+                "retrieval": retrieval,
+                "structured": structured_debug,
             }
         return payload
+
+    def _retrieve_hits_for_question(self, question: str, top_k: int, debug: bool = False) -> dict[str, Any]:
+        provider_key = self.openrouter_api_key or self.openai_api_key
+        fallback_hits = self.retriever.search(question, top_k=top_k)
+        result: dict[str, Any] = {
+            "mode": "fallback",
+            "tool_query": question,
+            "tool_top_k": top_k,
+            "hits": fallback_hits,
+        }
+
+        if not provider_key:
+            return result
+
+        messages = [
+            {"role": "system", "content": retrieval_system_prompt()},
+            {"role": "user", "content": question},
+        ]
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "search_documents",
+                    "description": "Search the ingested documents for relevant chunks.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "query": {"type": "string"},
+                            "top_k": {"type": "integer", "default": top_k},
+                        },
+                        "required": ["query"],
+                    },
+                },
+            }
+        ]
+
+        response = self._call_llm(messages, tools=tools)
+        if response is None:
+            return result
+
+        message = response.get("choices", [{}])[0].get("message", {})
+        tool_calls = message.get("tool_calls") or []
+        if not tool_calls:
+            return result
+
+        tool_call = tool_calls[0]
+        function = tool_call.get("function", {})
+        try:
+            arguments = json.loads(function.get("arguments") or "{}")
+        except json.JSONDecodeError:
+            arguments = {}
+
+        search_query = str(arguments.get("query") or question).strip() or question
+        tool_top_k_raw = arguments.get("top_k", top_k)
+        try:
+            tool_top_k = int(tool_top_k_raw)
+        except (TypeError, ValueError):
+            tool_top_k = top_k
+        tool_top_k = max(1, min(tool_top_k, 10))
+
+        hits = self.retriever.search(search_query, top_k=tool_top_k)
+        result.update(
+            {
+                "mode": "tool_call",
+                "tool_query": search_query,
+                "tool_top_k": tool_top_k,
+                "tool_call_id": tool_call.get("id"),
+                "raw_tool_arguments": arguments,
+                "hits": hits,
+            }
+        )
+        return result
 
     def _debug_hits(self, hits: list[dict[str, Any]]) -> list[dict[str, Any]]:
         return [
@@ -249,31 +380,31 @@ class RAGService:
             for hit in hits
         ]
 
-    def _build_sources(self, hits: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    def _build_sources_from_blocks(self, blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
         sources = []
         seen = set()
-        for hit in hits:
-            key = (hit["document_id"], hit["chunk_index"])
+        for block in blocks:
+            key = (block["document_id"], block["chunk_index"])
             if key in seen:
                 continue
             seen.add(key)
             sources.append(
                 {
-                    "document_id": hit["document_id"],
-                    "filename": hit["document_filename"],
-                    "page_number": hit["page_number"],
-                    "chunk_index": hit["chunk_index"],
-                    "score": round(hit["score"], 4),
-                    "preview": snippet(hit["text"]),
+                    "document_id": block["document_id"],
+                    "filename": block["document_filename"],
+                    "page_number": block["page_number"],
+                    "chunk_index": block["chunk_index"],
+                    "score": round(block["score"], 4),
+                    "preview": snippet(block["text"]),
                 }
             )
         return sources
 
-    def _extract_source_pages(self, hits: list[dict[str, Any]]) -> list[int]:
+    def _extract_source_pages_from_blocks(self, blocks: list[dict[str, Any]]) -> list[int]:
         pages = []
         seen = set()
-        for hit in hits:
-            page_number = hit["page_number"]
+        for block in blocks:
+            page_number = block["page_number"]
             if page_number is None or page_number in seen:
                 continue
             seen.add(page_number)
@@ -286,10 +417,13 @@ class RAGService:
             blocks.append(
                 {
                     "ref": index,
+                    "document_id": hit["document_id"],
                     "document_filename": hit["document_filename"],
                     "page_number": hit["page_number"],
                     "chunk_index": hit["chunk_index"],
                     "text": hit["text"],
+                    "score": hit["score"],
+                    "chunk_id": hit["id"],
                 }
             )
         return blocks
@@ -320,12 +454,81 @@ class RAGService:
         lines.append("If you want, I can narrow this to a specific document or page.")
         return "\n".join(lines)
 
-    def _generate_answer_with_llm(self, question: str, context_blocks: list[dict[str, Any]]) -> str | None:
+    def _generate_structured_answer(
+        self,
+        question: str,
+        context_blocks: list[dict[str, Any]],
+        context_text: str,
+        debug: bool = False,
+        max_retries: int = 2,
+    ) -> tuple[RAGAnswer | None, dict[str, Any]]:
+        provider_key = self.openrouter_api_key or self.openai_api_key
+        if not provider_key:
+            return None, {"reason": "no_llm_key"}
+
+        valid_refs = {block["ref"] for block in context_blocks}
+        prompt = self._answer_prompt_prefix() + (
+            f"Question: {question}\n\n"
+            f"<context>\n{context_text}\n</context>\n\n"
+            "Return only valid JSON."
+        )
+
+        messages = [
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": "Return the answer as valid JSON only."},
+        ]
+
+        last_error = ""
+        last_usage: dict[str, Any] | None = None
+        for attempt in range(max_retries + 1):
+            response = self._call_llm(messages)
+            if response is None:
+                last_error = "LLM request failed"
+                break
+
+            last_usage = response.get("usage") or None
+            message = response.get("choices", [{}])[0].get("message", {})
+            raw_content = message.get("content") or ""
+            try:
+                parsed = parse_rag_answer(raw_content, valid_refs=valid_refs)
+                return parsed, {
+                    "attempts": attempt + 1,
+                    "raw_json": raw_content,
+                    "model": self._active_model_name(),
+                    "usage": last_usage,
+                }
+            except (ValueError, json.JSONDecodeError) as exc:
+                last_error = str(exc)
+                messages.append({"role": "assistant", "content": raw_content})
+                messages.append(
+                    {
+                        "role": "user",
+                        "content": (
+                            f"Your previous response was invalid: {last_error}. "
+                            "Return valid JSON only that matches the schema exactly."
+                        ),
+                    }
+                )
+
+        return None, {
+            "attempts": max_retries + 1,
+            "last_error": last_error or "unknown_error",
+            "model": self._active_model_name(),
+            "usage": last_usage,
+        }
+
+    def _active_model_name(self) -> str:
+        return self.openrouter_model if self.openrouter_api_key else self.openai_model
+
+    def _call_llm(
+        self,
+        messages: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any] | None:
         provider_key = self.openrouter_api_key or self.openai_api_key
         if not provider_key:
             return None
 
-        context = self._build_context(context_blocks)
         if self.openrouter_api_key:
             model = self.openrouter_model
             base_url = self.openrouter_base_url
@@ -333,29 +536,14 @@ class RAGService:
             model = self.openai_model
             base_url = self.openai_base_url
 
-        payload = {
+        payload: dict[str, Any] = {
             "model": model,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": (
-                        "You answer strictly from the provided context. "
-                        "If the context does not contain the answer, say you do not know. "
-                        "Return a concise grounded answer. "
-                        "Mention page numbers when possible."
-                    ),
-                },
-                {
-                    "role": "user",
-                    "content": (
-                        f"Question: {question}\n\n"
-                        f"Context:\n{context}\n\n"
-                        "Write a concise answer grounded in the context only."
-                    ),
-                },
-            ],
+            "messages": messages,
             "temperature": 0.2,
         }
+        if tools is not None:
+            payload["tools"] = tools
+            payload["tool_choice"] = "auto"
 
         request = urllib.request.Request(
             f"{base_url}/chat/completions",
@@ -378,17 +566,9 @@ class RAGService:
 
         try:
             with urllib.request.urlopen(request, timeout=60) as response:
-                body = json.loads(response.read().decode("utf-8"))
-            choices = body.get("choices", [])
-            if not choices:
-                return None
-            message = choices[0].get("message", {})
-            content = message.get("content")
-            if isinstance(content, str) and content.strip():
-                return content.strip()
-        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, KeyError, IndexError):
+                return json.loads(response.read().decode("utf-8"))
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):
             return None
-        return None
 
     def documents_payload(self) -> list[dict[str, Any]]:
         return [item.to_dict() for item in self.store.list_documents()]
@@ -444,3 +624,4 @@ class RAGService:
 
     def stats(self) -> dict[str, Any]:
         return self.store.stats()
+

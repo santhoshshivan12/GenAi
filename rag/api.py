@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from html import escape
 from typing import Any
 
@@ -39,11 +40,18 @@ def render_page(question: str = "", result: dict[str, Any] | None = None, debug:
         sources_html = "".join(format_source_item(item) for item in result["sources"])
         source_pages_html = "".join(f"<li>Page {page}</li>" for page in result.get("source_pages", []))
         context_html = "".join(format_context_item(block) for block in result.get("context", []))
+        structured_html = ""
+        if result.get("structured_answer") is not None:
+            structured_html = f"""
+            <h3>Structured output</h3>
+            <pre>{escape(json.dumps(result["structured_answer"], indent=2, ensure_ascii=False))}</pre>
+            """
         result_html = f"""
         <section class="panel">
           <h2>Answer</h2>
           <pre>{escape(result["answer"])}</pre>
           <p class="small">Used LLM: {escape(str(result.get("used_llm", False)))}</p>
+          {structured_html}
           <h3>Source pages</h3>
           <ul>{source_pages_html or "<li>No page matches</li>"}</ul>
           <h3>Retrieved context</h3>
@@ -168,7 +176,7 @@ def render_page(question: str = "", result: dict[str, Any] | None = None, debug:
                 <label for="question">Question</label>
                 <input id="question" name="question" type="text" value="{question_value}" placeholder="What does the document say about refunds?" />
                 <label style="margin-top:10px;">
-                  <input type="checkbox" name="debug" value="true" {"checked" if debug else ""} />
+                  <input type="checkbox" name="debug" value="true" {'checked' if debug else ''} />
                   Debug output
                 </label>
                 <div style="margin-top: 12px;">
