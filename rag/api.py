@@ -15,11 +15,16 @@ service = RAGService()
 
 
 def format_source_item(item: dict[str, Any]) -> str:
-    page = "" if item["page_number"] is None else f" page {item['page_number']}"
+    filename = item.get("filename") or item.get("document_filename") or "Unknown"
+    page_num = item.get("page_number")
+    page = "" if page_num is None else f" page {page_num}"
+    chunk_index = item.get("chunk_index", 0)
+    score = item.get("score", 0.0)
     return (
-        f"<li><strong>{escape(item['filename'])}</strong>"
-        f"{page} chunk {item['chunk_index']} - score {item['score']}</li>"
+        f"<li><strong>{escape(str(filename))}</strong>"
+        f"{page} chunk {chunk_index} - score {score}</li>"
     )
+
 
 
 def format_context_item(block: dict[str, Any]) -> str:
@@ -46,12 +51,19 @@ def render_page(question: str = "", result: dict[str, Any] | None = None, debug:
             <h3>Structured output</h3>
             <pre>{escape(json.dumps(result["structured_answer"], indent=2, ensure_ascii=False))}</pre>
             """
+        debug_html = ""
+        if debug and result.get("debug") is not None:
+            debug_html = f"""
+            <h3>Debug information</h3>
+            <pre>{escape(json.dumps(result["debug"], indent=2, ensure_ascii=False))}</pre>
+            """
         result_html = f"""
         <section class="panel">
           <h2>Answer</h2>
           <pre>{escape(result["answer"])}</pre>
           <p class="small">Used LLM: {escape(str(result.get("used_llm", False)))}</p>
           {structured_html}
+          {debug_html}
           <h3>Source pages</h3>
           <ul>{source_pages_html or "<li>No page matches</li>"}</ul>
           <h3>Retrieved context</h3>
@@ -60,6 +72,7 @@ def render_page(question: str = "", result: dict[str, Any] | None = None, debug:
           <ul>{sources_html or "<li>No sources</li>"}</ul>
         </section>
         """
+
 
     document_rows = "".join(
         f"<tr><td>{escape(doc['filename'])}</td><td>{escape(doc['source_type'])}</td>"

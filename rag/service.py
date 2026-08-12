@@ -224,11 +224,12 @@ class RAGService:
 
         best_score = hits[0]["score"]
         if best_score < DEFAULT_SCORE_THRESHOLD:
+            context_blocks = self._build_context_blocks(hits)
             payload = {
                 "question": question,
                 "answer": "I do not know. I could not find a relevant chunk in the indexed documents.",
-                "sources": hits,
-                "source_pages": [],
+                "sources": self._build_sources_from_blocks(context_blocks),
+                "source_pages": self._extract_source_pages_from_blocks(context_blocks),
                 "context": [],
                 "chunks": hits,
                 "used_llm": False,
@@ -277,7 +278,17 @@ class RAGService:
             "structured_answer": structured_answer.to_dict() if structured_answer is not None else None,
         }
         if debug:
+            if structured_answer is not None and structured_answer.knows_answer:
+                reason = "answer_generated_with_llm"
+            elif structured_answer is not None and not structured_answer.knows_answer:
+                reason = "llm_did_not_find_answer_in_context"
+            elif not used_llm:
+                reason = "no_llm_key_local_fallback"
+            else:
+                reason = "llm_generation_failed"
+
             payload["debug"] = {
+                "reason": reason,
                 "threshold": DEFAULT_SCORE_THRESHOLD,
                 "best_score": best_score,
                 "top_k": top_k,
@@ -294,6 +305,7 @@ class RAGService:
                 "structured": structured_debug,
             }
         return payload
+
 
     def _retrieve_hits_for_question(self, question: str, top_k: int, debug: bool = False) -> dict[str, Any]:
         provider_key = self.openrouter_api_key or self.openai_api_key
@@ -392,6 +404,7 @@ class RAGService:
                 {
                     "document_id": block["document_id"],
                     "filename": block["document_filename"],
+                    "document_filename": block["document_filename"],
                     "page_number": block["page_number"],
                     "chunk_index": block["chunk_index"],
                     "score": round(block["score"], 4),
@@ -438,6 +451,63 @@ class RAGService:
             )
         return "\n\n".join(lines)
 
+    def _build_context_within_budget(
+        self,
+        question: str,
+        context_blocks: list[dict[str, Any]],
+        model_name: str,
+        max_context_tokens: int = 4000,
+    ) -> tuple[str, list[dict[str, Any]]]:
+        included_blocks: list[dict[str, Any]] = []
+        current_text = ""
+
+        for block in context_blocks:
+            test_blocks = included_blocks + [block]
+            test_text = self._build_context(test_blocks)
+            estimated_tokens = len(test_text) // 4
+            if estimated_tokens > max_context_tokens and included_blocks:
+                break
+            included_blocks.append(block)
+            current_text = test_text
+
+        return current_text, included_blocks
+
+    def _blocks_to_chunk_hits(self, blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        return [
+            {
+                "id": block.get("chunk_id", ""),
+                "document_id": block["document_id"],
+                "document_filename": block["document_filename"],
+                "page_number": block["page_number"],
+                "chunk_index": block["chunk_index"],
+                "text": block["text"],
+                "score": block["score"],
+            }
+            for block in blocks
+        ]
+
+    def _context_budget_debug(
+        self,
+        question: str,
+        model: str,
+        all_blocks: list[dict[str, Any]],
+        included_blocks: list[dict[str, Any]],
+        context_text: str,
+        max_context_tokens: int = 4000,
+    ) -> dict[str, Any]:
+        return {
+            "model": model,
+            "max_context_tokens": max_context_tokens,
+            "total_blocks": len(all_blocks),
+            "included_blocks": len(included_blocks),
+            "estimated_context_tokens": len(context_text) // 4,
+            "truncated": len(included_blocks) < len(all_blocks),
+        }
+
+    def _answer_prompt_prefix(self) -> str:
+        return f"{answer_system_prompt()}\n\n{answer_examples()}\n\n"
+
+
     def _build_local_answer(self, question: str, hits: list[dict[str, Any]]) -> str:
         lines = [
             f"Question: {question}",
@@ -467,16 +537,25 @@ class RAGService:
             return None, {"reason": "no_llm_key"}
 
         valid_refs = {block["ref"] for block in context_blocks}
-        prompt = self._answer_prompt_prefix() + (
-            f"Question: {question}\n\n"
+        system_content = (
+            f"{answer_system_prompt()}\n\n"
+            "Here are examples of expected JSON responses:\n\n"
+            f"{answer_examples()}"
+        )
+
+        user_content = (
             f"<context>\n{context_text}\n</context>\n\n"
-            "Return only valid JSON."
+            f"Question: {question}\n\n"
+            "Based ONLY on the provided context, answer the question accurately. "
+            "If the context contains the answer, set knows_answer to true, set confidence (0.0 to 1.0), list the reference block numbers used in used_sources, and include page numbers in page_numbers. "
+            "Return valid JSON only matching the schema."
         )
 
         messages = [
-            {"role": "system", "content": prompt},
-            {"role": "user", "content": "Return the answer as valid JSON only."},
+            {"role": "system", "content": system_content},
+            {"role": "user", "content": user_content},
         ]
+
 
         last_error = ""
         last_usage: dict[str, Any] | None = None

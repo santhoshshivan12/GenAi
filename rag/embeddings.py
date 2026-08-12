@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from functools import lru_cache
 from hashlib import blake2b
-from math import log
 from typing import Iterable
 
 
