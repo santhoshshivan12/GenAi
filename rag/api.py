@@ -76,6 +76,7 @@ def render_page(question: str = "", result: dict[str, Any] | None = None, debug:
 
     document_rows = "".join(
         f"<tr><td>{escape(doc['filename'])}</td><td>{escape(doc['source_type'])}</td>"
+        f"<td>{escape(doc.get('chunk_strategy', 'fixed_size'))}</td>"
         f"<td>{doc['chunk_count']}</td><td>{doc.get('page_count') if doc.get('page_count') is not None else '-'}</td>"
         f"<td>{escape(doc['created_at'])}</td>"
         f"<td><form action=\"/documents/{escape(doc['id'])}/delete\" method=\"post\" style=\"display:inline;\">"
@@ -86,8 +87,11 @@ def render_page(question: str = "", result: dict[str, Any] | None = None, debug:
     chunk_rows = "".join(
         f"<tr><td>{escape(chunk['id'])}</td>"
         f"<td>{escape(chunk['document_filename'])}</td>"
+        f"<td>{escape(chunk.get('chunk_strategy', 'fixed_size'))}</td>"
         f"<td>{chunk['page_number'] if chunk['page_number'] is not None else '-'}</td>"
-        f"<td>{chunk['chunk_index']}</td><td>{escape(snippet(chunk['text'], 180))}</td>"
+        f"<td>{chunk['chunk_index']}</td>"
+        f"<td>{chunk.get('word_count') if chunk.get('word_count') is not None else '-'}</td>"
+        f"<td>{escape(snippet(chunk['text'], 180))}</td>"
         f"<td><form action=\"/chunks/{escape(chunk['id'])}/delete\" method=\"post\" style=\"display:inline;\">"
         f"<button type=\"submit\" class=\"secondary\">Delete</button></form></td></tr>"
         for chunk in chunks
@@ -130,8 +134,8 @@ def render_page(question: str = "", result: dict[str, Any] | None = None, debug:
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.22);
           }}
           label {{ display: block; font-weight: 600; margin: 12px 0 8px; }}
-          input[type="text"] {{
-            width: 100%; box-sizing: border-box; padding: 12px 14px;
+          input[type="text"], select, input[type="number"] {{
+            width: 100%; box-sizing: border-box; padding: 10px 14px;
             border-radius: 10px; border: 1px solid var(--border);
             background: #0b1220; color: var(--text);
           }}
@@ -145,6 +149,10 @@ def render_page(question: str = "", result: dict[str, Any] | None = None, debug:
             background: linear-gradient(135deg, var(--accent-2), #86efac);
             margin-left: 8px;
           }}
+          button.danger {{
+            background: linear-gradient(135deg, #ef4444, #f87171);
+            color: #ffffff;
+          }}
           table {{ width: 100%; border-collapse: collapse; margin-top: 12px; }}
           th, td {{ border-bottom: 1px solid var(--border); padding: 10px 8px; text-align: left; vertical-align: top; }}
           th {{ color: #cbd5e1; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }}
@@ -156,7 +164,7 @@ def render_page(question: str = "", result: dict[str, Any] | None = None, debug:
             padding: 14px;
             overflow: auto;
           }}
-          .stats {{ display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; }}
+          .stats {{ display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 18px; }}
           .stat {{
             padding: 12px 14px; border-radius: 12px; background: var(--panel-2);
             border: 1px solid var(--border); min-width: 120px;
@@ -164,6 +172,8 @@ def render_page(question: str = "", result: dict[str, Any] | None = None, debug:
           .stat strong {{ display: block; font-size: 22px; }}
           .small {{ color: var(--muted); font-size: 13px; }}
           a {{ color: var(--accent); }}
+          .form-row {{ display: flex; gap: 12px; margin-top: 8px; }}
+          .form-row > div {{ flex: 1; }}
         </style>
       </head>
       <body>
@@ -174,14 +184,40 @@ def render_page(question: str = "", result: dict[str, Any] | None = None, debug:
           <div class="stats">
             <div class="stat"><strong>{stats["documents"]}</strong><span class="small">Documents</span></div>
             <div class="stat"><strong>{stats["chunks"]}</strong><span class="small">Chunks</span></div>
+            <div style="margin-left: auto;">
+              <form action="/clear" method="post" onsubmit="return confirm('Are you sure you want to clear ALL documents and chunks?');">
+                <button type="submit" class="danger">🗑️ Clear All Data</button>
+              </form>
+            </div>
           </div>
 
           <div class="grid">
             <section class="panel">
               <h2>Upload documents</h2>
               <form action="/upload" method="post" enctype="multipart/form-data">
-                <input type="file" name="files" multiple />
-                <button type="submit">Ingest files</button>
+                <input type="file" name="files" multiple required />
+                <div class="form-row">
+                  <div>
+                    <label for="chunk_strategy">Chunking Strategy</label>
+                    <select id="chunk_strategy" name="chunk_strategy">
+                      <option value="structure_aware">Structure-Aware (Header-based)</option>
+                      <option value="fixed_size">Fixed-Size Overlapping</option>
+                      <option value="sentence">Sentence-Based Structural</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label for="chunk_size">Chunk Size (words)</label>
+                    <input id="chunk_size" name="chunk_size" type="number" value="300" min="10" max="2000" />
+                  </div>
+                  <div>
+                    <label for="overlap">Overlap (words)</label>
+                    <input id="overlap" name="overlap" type="number" value="100" min="0" max="500" />
+                  </div>
+                </div>
+                <div style="margin-top: 14px;">
+                  <button type="submit">Ingest files</button>
+                </div>
               </form>
 
               <h2 style="margin-top:24px;">Ask a question</h2>
@@ -218,6 +254,7 @@ def render_page(question: str = "", result: dict[str, Any] | None = None, debug:
                 <tr>
                   <th>Filename</th>
                   <th>Type</th>
+                  <th>Strategy</th>
                   <th>Chunks</th>
                   <th>Pages</th>
                   <th>Created</th>
@@ -225,7 +262,7 @@ def render_page(question: str = "", result: dict[str, Any] | None = None, debug:
                 </tr>
               </thead>
               <tbody>
-                {document_rows or "<tr><td colspan='6'>No documents ingested yet.</td></tr>"}
+                {document_rows or "<tr><td colspan='7'>No documents ingested yet.</td></tr>"}
               </tbody>
             </table>
           </section>
@@ -237,14 +274,16 @@ def render_page(question: str = "", result: dict[str, Any] | None = None, debug:
                 <tr>
                   <th>Chunk ID</th>
                   <th>Document</th>
+                  <th>Strategy</th>
                   <th>Page</th>
                   <th>Chunk</th>
+                  <th>Words</th>
                   <th>Preview</th>
                   <th>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {chunk_rows or "<tr><td colspan='6'>No chunks stored yet.</td></tr>"}
+                {chunk_rows or "<tr><td colspan='8'>No chunks stored yet.</td></tr>"}
               </tbody>
             </table>
           </section>
@@ -261,15 +300,37 @@ def home(question: str = "", debug: bool = False) -> HTMLResponse:
 
 
 @app.post("/upload")
-def upload(files: list[UploadFile] = File(...)) -> RedirectResponse:
+def upload(
+    files: list[UploadFile] = File(...),
+    chunk_strategy: str = Form("fixed_size"),
+    chunk_size: int = Form(300),
+    overlap: int = Form(100),
+) -> RedirectResponse:
     if not files:
         raise HTTPException(status_code=400, detail="No files uploaded")
-    service.ingest_uploads(files)
+    service.ingest_uploads(
+        uploads=files,
+        chunk_strategy=chunk_strategy,
+        chunk_size=chunk_size,
+        overlap=overlap,
+    )
     return RedirectResponse(url="/", status_code=303)
+
+
+@app.post("/clear")
+def clear_all_data_web() -> RedirectResponse:
+    service.clear_all_data()
+    return RedirectResponse(url="/", status_code=303)
+
+
+@app.delete("/clear")
+def clear_all_data_api() -> JSONResponse:
+    return JSONResponse(service.clear_all_data())
 
 
 @app.post("/documents/{document_id}/delete")
 def delete_document(document_id: str) -> RedirectResponse:
+
     service.delete_document(document_id)
     return RedirectResponse(url="/", status_code=303)
 

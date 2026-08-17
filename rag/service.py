@@ -51,6 +51,98 @@ class RAGService:
         path.write_bytes(content)
         return path
 
+    def _infer_metadata(self, filename: str, text: str) -> dict[str, str]:
+        stem = Path(filename).stem.lower()
+        text_lower = text.lower()
+
+        # sdk_version
+        if "_v2" in stem or "v2" in stem:
+            sdk_version = "v2"
+        elif "_v3" in stem or "v3" in stem:
+            sdk_version = "v3"
+        else:
+            sdk_version = "v3"
+
+        # page_type
+        if "changelog" in stem or "changelog" in text_lower:
+            page_type = "changelog"
+        elif "guide" in text_lower or "guide" in stem or "auth" in stem or "errors" in stem:
+            page_type = "guide"
+        else:
+            page_type = "reference"
+
+        page_id = stem
+        source_file = filename
+
+        return {
+            "source_file": source_file,
+            "page_id": page_id,
+            "sdk_version": sdk_version,
+            "page_type": page_type,
+        }
+
+    def _extract_docx_markdown(self, path: Path) -> str:
+        import zipfile
+        import xml.etree.ElementTree as ET
+
+        W_NS = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+        KNOWN_SECTIONS = {
+            "overview", "parameters", "retry parameters", "configuration",
+            "configuration parameters", "example", "return value", "retry behavior",
+            "security", "compatibility", "request timeouts", "version 3.0.0",
+            "breaking changes", "improvements", "migration example", "version metadata",
+            "error codes", "common errors", "error handling", "features"
+        }
+
+        try:
+            with zipfile.ZipFile(path) as z:
+                xml_content = z.read("word/document.xml")
+                tree = ET.fromstring(xml_content)
+                body = tree.find(f"{W_NS}body")
+                if body is None:
+                    return ""
+
+                md_lines = []
+                is_first = True
+                for elem in body:
+                    if elem.tag == f"{W_NS}p":
+                        pPr = elem.find(f"{W_NS}pPr")
+                        pStyle = pPr.find(f"{W_NS}pStyle") if pPr is not None else None
+                        style_val = pStyle.attrib.get(f"{W_NS}val", "") if pStyle is not None else ""
+
+                        text = "".join(node.text for node in elem.iter() if node.tag.endswith("}t") and node.text).strip()
+                        if not text:
+                            continue
+
+                        text_lower = text.lower()
+                        if is_first:
+                            md_lines.append(f"# {text}")
+                            is_first = False
+                        elif "Heading1" in style_val:
+                            md_lines.append(f"# {text}")
+                        elif "Heading" in style_val or text_lower in KNOWN_SECTIONS:
+                            md_lines.append(f"## {text}")
+                        elif text.startswith("val ") or text.startswith("// ") or "client.send(" in text or "Client(" in text:
+                            md_lines.append(f"```kotlin\n{text}\n```")
+                        else:
+                            md_lines.append(text)
+                    elif elem.tag == f"{W_NS}tbl":
+                        table_lines = []
+                        rows = elem.findall(f"{W_NS}tr")
+                        for r_idx, row in enumerate(rows):
+                            cells = []
+                            for cell in row.findall(f"{W_NS}tc"):
+                                c_text = "".join(node.text for node in cell.iter() if node.tag.endswith("}t") and node.text).strip()
+                                cells.append(c_text)
+                            table_lines.append("| " + " | ".join(cells) + " |")
+                            if r_idx == 0:
+                                table_lines.append("| " + " | ".join(["---"] * len(cells)) + " |")
+                        md_lines.append("\n".join(table_lines))
+
+                return "\n\n".join(md_lines)
+        except Exception:
+            return ""
+
     def _extract_pdf_pages(self, path: Path) -> list[tuple[int, str]]:
         reader = PdfReader(str(path))
         pages: list[tuple[int, str]] = []
@@ -66,59 +158,93 @@ class RAGService:
         text = clean_text(text)
         return [(None, text)] if text else []
 
-    def ingest_uploads(self, uploads: Iterable[UploadFile]) -> list[dict[str, Any]]:
+    def ingest_documents_from_paths(
+        self,
+        file_paths: list[str | Path],
+        chunk_strategy: str = "fixed_size",
+        chunk_size: int = DEFAULT_CHUNK_SIZE,
+        overlap: int = DEFAULT_CHUNK_OVERLAP,
+    ) -> list[dict[str, Any]]:
         stored_documents: list[dict[str, Any]] = []
 
-        for upload in uploads:
-            content = upload.file.read()
-            stored_path = self._write_upload(upload.filename, content)
-            suffix = stored_path.suffix.lower()
+        for fp in file_paths:
+            path = Path(fp)
+            if not path.exists():
+                continue
+            suffix = path.suffix.lower()
             document_id = uuid4().hex
             created_at = self._timestamp()
 
-            if suffix == ".pdf":
-                pages = self._extract_pdf_pages(stored_path)
+            if suffix == ".docx":
+                raw_text = self._extract_docx_markdown(path)
+                raw_segments = [(None, raw_text)]
+                source_type = "docx"
+                page_count = None
+            elif suffix == ".pdf":
+                pages = self._extract_pdf_pages(path)
                 raw_segments = pages
                 source_type = "pdf"
                 page_count = len(pages)
             else:
-                raw_segments = self._extract_text_file(stored_path)
+                raw_segments = self._extract_text_file(path)
                 source_type = "text"
                 page_count = None
+
+            full_text = "\n\n".join(seg for _, seg in raw_segments)
+            meta = self._infer_metadata(path.name, full_text)
 
             chunk_payloads: list[ChunkRecord] = []
             chunk_index = 0
             text_length = 0
 
             for page_number, segment_text in raw_segments:
-                pieces = chunk_text(segment_text, DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_OVERLAP)
+                pieces = chunk_text(segment_text, chunk_size, overlap, strategy=chunk_strategy)
                 text_length += len(segment_text)
                 for piece in pieces:
                     chunk_id = uuid4().hex
                     embedding = self.embeddings.encode([piece])[0]
-                    chunk_payloads.append(
-                        ChunkRecord(
-                            id=chunk_id,
-                            document_id=document_id,
-                            document_filename=upload.filename,
-                            chunk_index=chunk_index,
-                            page_number=page_number,
-                            text=piece,
-                            embedding=embedding,
-                            created_at=created_at,
-                        )
+                    words = len(piece.split())
+                    chars = len(piece)
+
+                    chunk_rec = ChunkRecord(
+                        id=chunk_id,
+                        document_id=document_id,
+                        document_filename=path.name,
+                        chunk_index=chunk_index,
+                        page_number=page_number,
+                        text=piece,
+                        embedding=embedding,
+                        created_at=created_at,
+                        chunk_strategy=chunk_strategy,
+                        word_count=words,
+                        char_count=chars,
+                        source_file=meta["source_file"],
+                        page_id=meta["page_id"],
+                        sdk_version=meta["sdk_version"],
+                        page_type=meta["page_type"],
                     )
+
+                    # Strict Ingestion Rule: Validate source_file exists
+                    if not chunk_rec.source_file:
+                        raise ValueError(f"Strict Ingestion Failure: Chunk {chunk_id} has no source_file metadata!")
+
+                    chunk_payloads.append(chunk_rec)
                     chunk_index += 1
 
             document = DocumentRecord(
                 id=document_id,
-                filename=upload.filename,
+                filename=path.name,
                 source_type=source_type,
-                stored_path=str(stored_path),
+                stored_path=str(path),
                 created_at=created_at,
                 chunk_count=len(chunk_payloads),
                 page_count=page_count,
                 text_length=text_length,
+                chunk_strategy=chunk_strategy,
+                source_file=meta["source_file"],
+                page_id=meta["page_id"],
+                sdk_version=meta["sdk_version"],
+                page_type=meta["page_type"],
             )
             self.store.add_document(document)
             self.store.add_chunks(chunk_payloads)
@@ -133,6 +259,107 @@ class RAGService:
 
         return stored_documents
 
+    def ingest_uploads(
+        self,
+        uploads: Iterable[UploadFile],
+        chunk_strategy: str = "fixed_size",
+        chunk_size: int = DEFAULT_CHUNK_SIZE,
+        overlap: int = DEFAULT_CHUNK_OVERLAP,
+    ) -> list[dict[str, Any]]:
+        stored_documents: list[dict[str, Any]] = []
+
+        for upload in uploads:
+            content = upload.file.read()
+            stored_path = self._write_upload(upload.filename, content)
+            suffix = stored_path.suffix.lower()
+            document_id = uuid4().hex
+            created_at = self._timestamp()
+
+            if suffix == ".docx":
+                raw_text = self._extract_docx_markdown(stored_path)
+                raw_segments = [(None, raw_text)]
+                source_type = "docx"
+                page_count = None
+            elif suffix == ".pdf":
+                pages = self._extract_pdf_pages(stored_path)
+                raw_segments = pages
+                source_type = "pdf"
+                page_count = len(pages)
+            else:
+                raw_segments = self._extract_text_file(stored_path)
+                source_type = "text"
+                page_count = None
+
+            full_text = "\n\n".join(seg for _, seg in raw_segments)
+            meta = self._infer_metadata(upload.filename, full_text)
+
+            chunk_payloads: list[ChunkRecord] = []
+            chunk_index = 0
+            text_length = 0
+
+            for page_number, segment_text in raw_segments:
+                pieces = chunk_text(segment_text, chunk_size, overlap, strategy=chunk_strategy)
+                text_length += len(segment_text)
+                for piece in pieces:
+                    chunk_id = uuid4().hex
+                    embedding = self.embeddings.encode([piece])[0]
+                    words = len(piece.split())
+                    chars = len(piece)
+
+                    chunk_rec = ChunkRecord(
+                        id=chunk_id,
+                        document_id=document_id,
+                        document_filename=upload.filename,
+                        chunk_index=chunk_index,
+                        page_number=page_number,
+                        text=piece,
+                        embedding=embedding,
+                        created_at=created_at,
+                        chunk_strategy=chunk_strategy,
+                        word_count=words,
+                        char_count=chars,
+                        source_file=meta["source_file"],
+                        page_id=meta["page_id"],
+                        sdk_version=meta["sdk_version"],
+                        page_type=meta["page_type"],
+                    )
+
+                    # Strict Ingestion Rule: Validate source_file exists
+                    if not chunk_rec.source_file:
+                        raise ValueError(f"Strict Ingestion Failure: Chunk {chunk_id} has no source_file metadata!")
+
+                    chunk_payloads.append(chunk_rec)
+                    chunk_index += 1
+
+            document = DocumentRecord(
+                id=document_id,
+                filename=upload.filename,
+                source_type=source_type,
+                stored_path=str(stored_path),
+                created_at=created_at,
+                chunk_count=len(chunk_payloads),
+                page_count=page_count,
+                text_length=text_length,
+                chunk_strategy=chunk_strategy,
+                source_file=meta["source_file"],
+                page_id=meta["page_id"],
+                sdk_version=meta["sdk_version"],
+                page_type=meta["page_type"],
+            )
+            self.store.add_document(document)
+            self.store.add_chunks(chunk_payloads)
+            self.retriever.add_chunks([item.to_dict() for item in chunk_payloads])
+
+            stored_documents.append(
+                {
+                    "document": document.to_dict(),
+                    "chunks": [item.to_dict() for item in chunk_payloads],
+                }
+            )
+
+        return stored_documents
+
+
     def delete_document(self, document_id: str) -> dict[str, Any]:
         document = self.store.get_document(document_id)
         if document is None:
@@ -146,7 +373,15 @@ class RAGService:
             "removed_chunks": len(removed_chunks),
         }
 
+    def clear_all_data(self) -> dict[str, Any]:
+        from reset_data import reset_store_data
+        reset_store_data()
+        self.store = LocalStore()
+        self.retriever = Retriever(self.store, self.embeddings)
+        return {"cleared": True, "message": "All store and index data cleared successfully."}
+
     def delete_chunk(self, chunk_id: str) -> dict[str, Any]:
+
         chunk = self.store.get_chunk(chunk_id)
         if chunk is None:
             return {"deleted": False, "reason": "chunk_not_found"}

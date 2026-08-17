@@ -14,6 +14,11 @@ class DocumentRecord:
     chunk_count: int
     page_count: int | None = None
     text_length: int | None = None
+    chunk_strategy: str = "fixed_size"
+    source_file: str | None = None
+    page_id: str | None = None
+    sdk_version: str | None = None
+    page_type: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -29,7 +34,15 @@ class ChunkRecord:
     text: str
     embedding: list[float]
     created_at: str
+    chunk_strategy: str = "fixed_size"
+    word_count: int | None = None
+    char_count: int | None = None
+    source_file: str | None = None
+    page_id: str | None = None
+    sdk_version: str | None = None
+    page_type: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
+
 
