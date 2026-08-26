@@ -38,6 +38,23 @@ class RAGService:
         self.openai_api_key = os.getenv("OPENAI_API_KEY", "").strip()
         self.openai_model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini").strip()
         self.openai_base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
+        self._hybrid_retriever = None
+
+        # Automatically ingest v2 and v3 default documents on startup if store is empty
+        self.auto_ingest_default_docs()
+
+    def auto_ingest_default_docs(self, force: bool = False) -> list[dict[str, Any]]:
+        import glob
+        if not force and len(self.store.list_documents()) > 0:
+            return []
+
+        raw_paths = glob.glob("docs/*/*.pdf") + glob.glob("docs/*/*.docx")
+        # Normalize paths to prevent duplicate entries from slash / backslash differences
+        unique_paths = sorted(list({str(Path(p).resolve()): str(Path(p)) for p in raw_paths}.values()))
+        if unique_paths:
+            print(f"Auto-ingesting default SDK v2 & v3 documents: {unique_paths}...")
+            return self.ingest_documents_from_paths(unique_paths, chunk_strategy="structure_aware")
+        return []
 
     def _timestamp(self) -> str:
         return datetime.now(timezone.utc).isoformat()
@@ -378,6 +395,7 @@ class RAGService:
         reset_store_data()
         self.store = LocalStore()
         self.retriever = Retriever(self.store, self.embeddings)
+        self.reset_hybrid_retriever()
         return {"cleared": True, "message": "All store and index data cleared successfully."}
 
     def delete_chunk(self, chunk_id: str) -> dict[str, Any]:
@@ -388,23 +406,160 @@ class RAGService:
 
         self.retriever.delete_chunks([chunk_id])
         removed = self.store.delete_chunk(chunk_id)
+        self.reset_hybrid_retriever()
         return {
             "deleted": removed is not None,
             "chunk_id": chunk_id,
             "document_id": chunk.document_id if removed is not None else None,
         }
 
-    def answer(self, question: str, top_k: int = 4, debug: bool = False) -> dict[str, Any]:
-        return self._answer_one(question, top_k=top_k, debug=debug)
+    def get_hybrid_retriever(self) -> Any:
+        if getattr(self, "_hybrid_retriever", None) is None:
+            from week4.hybrid import HybridRetriever
+            self._hybrid_retriever = HybridRetriever(self, rrf_k=60)
+        return self._hybrid_retriever
 
-    def answer_batch(self, questions: list[str], top_k: int = 4, debug: bool = False) -> dict[str, Any]:
-        results = [self._answer_one(question, top_k=top_k, debug=debug) for question in questions if question.strip()]
+    def get_multiquery_retriever(self) -> Any:
+        if getattr(self, "_multiquery_retriever", None) is None:
+            from week4.multi_query import MultiQueryBM25Retriever
+            self._multiquery_retriever = MultiQueryBM25Retriever(self)
+        return self._multiquery_retriever
+
+    def reset_hybrid_retriever(self) -> None:
+        self._hybrid_retriever = None
+        self._multiquery_retriever = None
+
+    def compare_retrieval(self, question: str, top_k: int = 3, debug: bool = False) -> dict[str, Any]:
+        import json
+        import time
+        from pathlib import Path
+
+        golden_set_file = Path("week4/golden_set.json")
+        golden_item = None
+        if golden_set_file.exists():
+            try:
+                gset = json.loads(golden_set_file.read_text(encoding="utf-8"))
+                for item in gset:
+                    if (
+                        item["question"].strip().lower() == question.strip().lower()
+                        or item["id"].strip().lower() == question.strip().lower()
+                    ):
+                        golden_item = item
+                        break
+            except Exception:
+                pass
+
+        # 1. Baseline: Dense Vector Search (Search full candidate pool to find exact global rank)
+        t0 = time.perf_counter()
+        dense_all = self.retriever.search(question, top_k=54)
+        t1 = time.perf_counter()
+        dense_latency_ms = (t1 - t0) * 1000.0
+        dense_hits = dense_all[:top_k]
+
+        # 2. Hybrid: BM25 + RRF (Search full candidate pool to find exact global rank)
+        t2 = time.perf_counter()
+        hybrid_all = self.get_hybrid_retriever().search(question, top_k=54, candidate_k=25)
+        t3 = time.perf_counter()
+        hybrid_latency_ms = (t3 - t2) * 1000.0
+        hybrid_hits = hybrid_all[:top_k]
+
+        # 3. Multi-Query (3x Top-4) + BM25 Re-rank
+        t4 = time.perf_counter()
+        mq_details = self.get_multiquery_retriever().search_with_details(question, top_k=top_k)
+        t5 = time.perf_counter()
+        mq_latency_ms = (t5 - t4) * 1000.0
+        mq_hits = mq_details["top_chunks"]
+
+        expected_chunk_id = golden_item["correct_chunk_id"] if golden_item else None
+
+        dense_all_ids = [h["id"] for h in dense_all]
+        hybrid_all_ids = [h["id"] for h in hybrid_all]
+        mq_retrieved_ids = [h["id"] for h in mq_hits]
+
+        dense_rank = (dense_all_ids.index(expected_chunk_id) + 1) if (expected_chunk_id and expected_chunk_id in dense_all_ids) else None
+        hybrid_rank = (hybrid_all_ids.index(expected_chunk_id) + 1) if (expected_chunk_id and expected_chunk_id in hybrid_all_ids) else None
+        mq_rank = (mq_retrieved_ids.index(expected_chunk_id) + 1) if (expected_chunk_id and expected_chunk_id in mq_retrieved_ids) else None
+
+        dense_hit = (dense_rank is not None and dense_rank <= top_k) if expected_chunk_id else None
+        hybrid_hit = (hybrid_rank is not None and hybrid_rank <= top_k) if expected_chunk_id else None
+        mq_hit = (mq_rank is not None and mq_rank <= top_k) if expected_chunk_id else None
+
+        dense_answer = self._build_local_answer(question, dense_hits)
+        hybrid_answer = self._build_local_answer(question, hybrid_hits)
+        mq_answer = self._build_local_answer(question, mq_hits)
+
+        return {
+            "question": question,
+            "golden_item": golden_item,
+            "expected_chunk_id": expected_chunk_id,
+            "baseline": {
+                "name": "Baseline (Dense Vector Only)",
+                "mode": "dense",
+                "hits": dense_hits,
+                "hit_at_3": dense_hit,
+                "target_rank": dense_rank,
+                "latency_ms": round(dense_latency_ms, 2),
+                "answer": dense_answer,
+                "context_blocks": self._build_context_blocks(dense_hits),
+            },
+            "hybrid": {
+                "name": "Week 4 Improved (BM25 + RRF)",
+                "mode": "hybrid",
+                "hits": hybrid_hits,
+                "hit_at_3": hybrid_hit,
+                "target_rank": hybrid_rank,
+                "latency_ms": round(hybrid_latency_ms, 2),
+                "answer": hybrid_answer,
+                "context_blocks": self._build_context_blocks(hybrid_hits),
+            },
+            "multiquery": {
+                "name": "Multi-Query (3x Top-4) + BM25",
+                "mode": "multiquery",
+                "hits": mq_hits,
+                "hit_at_3": mq_hit,
+                "target_rank": mq_rank,
+                "latency_ms": round(mq_latency_ms, 2),
+                "answer": mq_answer,
+                "variations": mq_details.get("variations", []),
+                "passes": mq_details.get("passes", []),
+                "candidate_pool_size": len(mq_details.get("candidate_pool", [])),
+                "context_blocks": self._build_context_blocks(mq_hits),
+            },
+        }
+
+    def answer(
+        self,
+        question: str,
+        top_k: int = 4,
+        debug: bool = False,
+        retrieval_mode: str = "hybrid",
+    ) -> dict[str, Any]:
+        return self._answer_one(question, top_k=top_k, debug=debug, retrieval_mode=retrieval_mode)
+
+    def answer_batch(
+        self,
+        questions: list[str],
+        top_k: int = 4,
+        debug: bool = False,
+        retrieval_mode: str = "hybrid",
+    ) -> dict[str, Any]:
+        results = [
+            self._answer_one(question, top_k=top_k, debug=debug, retrieval_mode=retrieval_mode)
+            for question in questions
+            if question.strip()
+        ]
         return {
             "count": len(results),
             "results": results,
         }
 
-    def _answer_one(self, question: str, top_k: int = 4, debug: bool = False) -> dict[str, Any]:
+    def _answer_one(
+        self,
+        question: str,
+        top_k: int = 4,
+        debug: bool = False,
+        retrieval_mode: str = "hybrid",
+    ) -> dict[str, Any]:
         question = question.strip()
         if not question:
             payload = {
@@ -436,7 +591,7 @@ class RAGService:
                 payload["debug"] = {"reason": "question_too_long", "max_length": 2000}
             return payload
 
-        retrieval = self._retrieve_hits_for_question(question, top_k=top_k, debug=debug)
+        retrieval = self._retrieve_hits_for_question(question, top_k=top_k, debug=debug, retrieval_mode=retrieval_mode)
         hits = retrieval["hits"]
         if not hits:
             payload = {
@@ -457,8 +612,9 @@ class RAGService:
                 }
             return payload
 
-        best_score = hits[0]["score"]
-        if best_score < DEFAULT_SCORE_THRESHOLD:
+        effective_threshold = 0.005 if retrieval_mode in ("hybrid", "multiquery") else DEFAULT_SCORE_THRESHOLD
+        best_score = hits[0].get("score") if hits[0].get("score") is not None else hits[0].get("rrf_score", 0.0)
+        if best_score < effective_threshold:
             context_blocks = self._build_context_blocks(hits)
             payload = {
                 "question": question,
@@ -473,7 +629,7 @@ class RAGService:
             if debug:
                 payload["debug"] = {
                     "reason": "score_below_threshold",
-                    "threshold": DEFAULT_SCORE_THRESHOLD,
+                    "threshold": effective_threshold,
                     "best_score": best_score,
                     "top_k": top_k,
                     "top_hits": self._debug_hits(hits),
@@ -542,11 +698,23 @@ class RAGService:
         return payload
 
 
-    def _retrieve_hits_for_question(self, question: str, top_k: int, debug: bool = False) -> dict[str, Any]:
+    def _retrieve_hits_for_question(
+        self,
+        question: str,
+        top_k: int,
+        debug: bool = False,
+        retrieval_mode: str = "hybrid",
+    ) -> dict[str, Any]:
         provider_key = self.openrouter_api_key or self.openai_api_key
-        fallback_hits = self.retriever.search(question, top_k=top_k)
+        if retrieval_mode == "hybrid":
+            fallback_hits = self.get_hybrid_retriever().search(question, top_k=top_k, candidate_k=25)
+        elif retrieval_mode == "multiquery":
+            fallback_hits = self.get_multiquery_retriever().search(question, top_k=top_k)
+        else:
+            fallback_hits = self.retriever.search(question, top_k=top_k)
+
         result: dict[str, Any] = {
-            "mode": "fallback",
+            "mode": f"fallback_{retrieval_mode}",
             "tool_query": question,
             "tool_top_k": top_k,
             "hits": fallback_hits,
@@ -601,7 +769,11 @@ class RAGService:
             tool_top_k = top_k
         tool_top_k = max(1, min(tool_top_k, 10))
 
-        hits = self.retriever.search(search_query, top_k=tool_top_k)
+        if retrieval_mode == "hybrid":
+            hits = self.get_hybrid_retriever().search(search_query, top_k=tool_top_k, candidate_k=25)
+        else:
+            hits = self.retriever.search(search_query, top_k=tool_top_k)
+
         result.update(
             {
                 "mode": "tool_call",
@@ -617,12 +789,14 @@ class RAGService:
     def _debug_hits(self, hits: list[dict[str, Any]]) -> list[dict[str, Any]]:
         return [
             {
-                "document_filename": hit["document_filename"],
-                "page_number": hit["page_number"],
-                "chunk_index": hit["chunk_index"],
-                "score": round(hit["score"], 4),
-                "text_preview": snippet(hit["text"], 200),
-                "chunk_id": hit["id"],
+                "document_filename": hit.get("document_filename") or hit.get("source_file") or "Unknown",
+                "page_number": hit.get("page_number"),
+                "chunk_index": hit.get("chunk_index", 0),
+                "score": round(hit.get("score") if hit.get("score") is not None else hit.get("rrf_score", 0.0), 4),
+                "rrf_score": hit.get("rrf_score"),
+                "bm25_score": hit.get("bm25_score"),
+                "text_preview": snippet(hit.get("text", ""), 200),
+                "chunk_id": hit.get("id", ""),
             }
             for hit in hits
         ]
@@ -642,8 +816,9 @@ class RAGService:
                     "document_filename": block["document_filename"],
                     "page_number": block["page_number"],
                     "chunk_index": block["chunk_index"],
-                    "score": round(block["score"], 4),
-                    "preview": snippet(block["text"]),
+                    "score": round(block.get("score", 0.0), 4),
+                    "rrf_score": block.get("rrf_score"),
+                    "preview": snippet(block.get("text", "")),
                 }
             )
         return sources
@@ -665,13 +840,15 @@ class RAGService:
             blocks.append(
                 {
                     "ref": index,
-                    "document_id": hit["document_id"],
-                    "document_filename": hit["document_filename"],
-                    "page_number": hit["page_number"],
-                    "chunk_index": hit["chunk_index"],
-                    "text": hit["text"],
-                    "score": hit["score"],
-                    "chunk_id": hit["id"],
+                    "document_id": hit.get("document_id", ""),
+                    "document_filename": hit.get("document_filename") or hit.get("source_file") or "Unknown",
+                    "page_number": hit.get("page_number"),
+                    "chunk_index": hit.get("chunk_index", 0),
+                    "text": hit.get("text", ""),
+                    "score": hit.get("score") if hit.get("score") is not None else hit.get("rrf_score", 0.0),
+                    "rrf_score": hit.get("rrf_score"),
+                    "bm25_score": hit.get("bm25_score"),
+                    "chunk_id": hit.get("id", ""),
                 }
             )
         return blocks
@@ -747,16 +924,17 @@ class RAGService:
         lines = [
             f"Question: {question}",
             "",
-            "Grounded answer:",
+            "Grounded Answer (Extracted from retrieved context):",
         ]
         for hit in hits:
-            page_part = "" if hit["page_number"] is None else f", page {hit['page_number']}"
+            filename = hit.get("document_filename") or hit.get("source_file") or "Document"
+            page_part = "" if hit.get("page_number") is None else f", page {hit['page_number']}"
+            score_val = hit.get("score") if hit.get("score") is not None else hit.get("rrf_score", 0.0)
+            score_label = f"RRF: {hit['rrf_score']}" if hit.get("rrf_score") else f"score: {score_val:.3f}"
             lines.append(
-                f"- {snippet(hit['text'], 280)} "
-                f"[source: {hit['document_filename']}{page_part}, chunk {hit['chunk_index']}, score {hit['score']:.3f}]"
+                f"• {snippet(hit.get('text', ''), 280)} "
+                f"[{filename}{page_part}, chunk {hit.get('chunk_index', 0)} ({score_label})]"
             )
-        lines.append("")
-        lines.append("If you want, I can narrow this to a specific document or page.")
         return "\n".join(lines)
 
     def _generate_structured_answer(

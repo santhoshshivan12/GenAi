@@ -11,59 +11,59 @@ from rag.utils import chunk_text
 USER_QUESTIONS = [
     {
         "id": "Q1",
-        "question": "What is the default value of retry_backoff_ms in Client.send() for SDK v3?",
-        "target_page": "01_client_send_v3.docx",
-        "target_section": "## Parameters",
-        "target_desc": "Parameter Table Row"
+        "question": "How do you create a Dio instance with default options?",
+        "target_page": "dio - Dart API docs_v2.pdf",
+        "target_section": "Creating an instance and set default configs",
+        "target_desc": "Code Example"
     },
     {
         "id": "Q2",
-        "question": "What is the type and default value of max_retries in SDK v3?",
-        "target_page": "01_client_send_v3.docx",
-        "target_section": "## Parameters",
-        "target_desc": "Parameter Table Row"
+        "question": "What property is used to configure the connection timeout in Dio?",
+        "target_page": "dio - Dart API docs_v2.pdf",
+        "target_section": "Request Options",
+        "target_desc": "API Parameter"
     },
     {
         "id": "Q3",
-        "question": "What happens to the retry delay after each retry in SDK v3?",
-        "target_page": "02_client_retry_v3.docx",
-        "target_section": "## Retry Behavior",
-        "target_desc": "Prose Section"
+        "question": "Which exception type is thrown when a send timeout occurs?",
+        "target_page": "dio - Dart API docs_v2.pdf",
+        "target_section": "Request Options",
+        "target_desc": "Exception Enum"
     },
     {
         "id": "Q4",
-        "question": "What is the default value of timeout_ms for Client.send() in SDK v3?",
-        "target_page": "01_client_send_v3.docx",
-        "target_section": "## Parameters",
-        "target_desc": "Parameter Table Row"
+        "question": "Which exception type is thrown when a receive timeout occurs?",
+        "target_page": "dio - Dart API docs_v2.pdf",
+        "target_section": "Request Options",
+        "target_desc": "Exception Enum"
     },
     {
         "id": "Q5",
-        "question": "What authentication header does SDK v3 use by default?",
-        "target_page": "03_client_auth_v3.docx",
-        "target_section": "## Configuration",
-        "target_desc": "Parameter Table Row"
+        "question": "How can a request be cancelled in Dio, and which class is used?",
+        "target_page": "dio - Dart API docs_v2.pdf",
+        "target_section": "Cancellation",
+        "target_desc": "Code Example / Class API"
     },
     {
         "id": "Q6",
-        "question": "What is the default value of follow_redirects in SDK v3?",
-        "target_page": "05_client_configuration_v3.docx",
-        "target_section": "## Configuration Parameters",
-        "target_desc": "Parameter Table Row"
+        "question": "What response type should be used to receive raw bytes from a Dio request?",
+        "target_page": "dio - Dart API docs_v3.pdf",
+        "target_section": "Get response with bytes",
+        "target_desc": "Code Example"
     },
     {
         "id": "Q7",
-        "question": "What changed in the default timeout_ms between SDK v2 and SDK v3?",
-        "target_page": "06_sdk_v3_changelog.docx",
-        "target_section": "## Breaking Changes",
-        "target_desc": "Changelog Prose"
+        "question": "What method is used in Dio v3 to perform a QUERY request with a request body?",
+        "target_page": "dio - Dart API docs_v3.pdf",
+        "target_section": "Performing a QUERY request",
+        "target_desc": "Code Example"
     },
     {
         "id": "Q8",
-        "question": "What values are used for max_retries and timeout_ms in the SDK v3 migration example?",
-        "target_page": "06_sdk_v3_changelog.docx",
-        "target_section": "## Migration Example",
-        "target_desc": "Fenced Code Block"
+        "question": "Which GoRouter feature allows an inner Navigator to be displayed while keeping a BottomNavigationBar visible?",
+        "target_page": "go_router - Dart API docs_v3.pdf",
+        "target_section": "Features",
+        "target_desc": "ShellRoute Feature"
     }
 ]
 
@@ -76,10 +76,10 @@ def print_section(title: str):
 
 def test_1_ingestion_and_metadata(svc: RAGService):
     print_section("TEST 1: Ingestion & Metadata Validation")
-    v3_files = sorted(glob.glob("docs/v3/*.docx"))
-    print(f"Ingesting 6 v3 reference pages: {v3_files}...")
+    doc_files = sorted(glob.glob("docs/*/*.pdf"))
+    print(f"Ingesting reference pages: {doc_files}...")
     
-    docs = svc.ingest_documents_from_paths(v3_files, chunk_strategy="structure_aware")
+    docs = svc.ingest_documents_from_paths(doc_files, chunk_strategy="structure_aware")
     print(f"Ingested {len(docs)} documents.")
 
     total_chunks = 0
@@ -117,12 +117,12 @@ def test_2_evaluate_both_strategies():
     print_section("TEST 2: Benchmarking Hit-in-Top-5 For Both Chunking Strategies")
     from reset_data import reset_store_data
 
-    v3_files = sorted(glob.glob("docs/v3/*.docx"))
+    doc_files = sorted(glob.glob("docs/*/*.pdf"))
 
     # Strategy A: fixed_size
     reset_store_data()
     svcA = RAGService()
-    svcA.ingest_documents_from_paths(v3_files, chunk_strategy="fixed_size", chunk_size=100, overlap=20)
+    svcA.ingest_documents_from_paths(doc_files, chunk_strategy="fixed_size", chunk_size=100, overlap=20)
     
     hits_A = 0
     results_A = []
@@ -145,7 +145,7 @@ def test_2_evaluate_both_strategies():
     # Strategy B: structure_aware
     reset_store_data()
     svcB = RAGService()
-    svcB.ingest_documents_from_paths(v3_files, chunk_strategy="structure_aware")
+    svcB.ingest_documents_from_paths(doc_files, chunk_strategy="structure_aware")
 
     hits_B = 0
     results_B = []
