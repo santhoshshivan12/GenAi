@@ -1,0 +1,380 @@
+{
+  "total_questions": 12,
+  "hits_at_3": 0,
+  "hit_at_3_rate_pct": 0.0,
+  "p50_latency_ms": 10.94,
+  "question_results": [
+    {
+      "question_id": "Q01",
+      "question": "How do you create a Dio instance with default options?",
+      "expected_chunk_id": "e808fa6db2b74ec595f35bf539a02098",
+      "expected_source_file": "dio - Dart API docs_v2.pdf",
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk_id": "9cc698e0d8aa42c0a2119c7993ef549b",
+          "score": 0.5209,
+          "source_file": "dio - Dart API docs_v2.pdf",
+          "text_snippet": "\ueddbDio APIs Creating an instance and set default configs It is recommended to use a singleton of Dio in projects, which ca"
+        },
+        {
+          "rank": 2,
+          "chunk_id": "a1a00fa537da456ea1ce8ca06abaf478",
+          "score": 0.5209,
+          "source_file": "dio - Dart API docs_v2.pdf",
+          "text_snippet": "\ueddbDio APIs Creating an instance and set default configs It is recommended to use a singleton of Dio in projects, which ca"
+        },
+        {
+          "rank": 3,
+          "chunk_id": "f1ba2427aa7849dc9c7d30771244075e",
+          "score": 0.5209,
+          "source_file": "dio - Dart API docs_v2.pdf",
+          "text_snippet": "\ueddbDio APIs Creating an instance and set default configs It is recommended to use a singleton of Dio in projects, which ca"
+        }
+      ],
+      "hit_at_3": false,
+      "latency_ms": 306.63
+    },
+    {
+      "question_id": "Q02",
+      "question": "What property is used to configure the connection timeout in Dio?",
+      "expected_chunk_id": "e808fa6db2b74ec595f35bf539a02098",
+      "expected_source_file": "dio - Dart API docs_v2.pdf",
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk_id": "f4a4f01476d04d96ad6dc5590c5f63b0",
+          "score": 0.6698,
+          "source_file": "dio - Dart API docs_v2.pdf",
+          "text_snippet": "\ueddb Request Options There are two request options concepts in the Dio library: BaseOptions and Options. The BaseOptions in"
+        },
+        {
+          "rank": 2,
+          "chunk_id": "3dcded19d2f34058b7c432a296a81980",
+          "score": 0.6698,
+          "source_file": "dio - Dart API docs_v2.pdf",
+          "text_snippet": "\ueddb Request Options There are two request options concepts in the Dio library: BaseOptions and Options. The BaseOptions in"
+        },
+        {
+          "rank": 3,
+          "chunk_id": "4cd008a565774c17a2bc9c929d616d01",
+          "score": 0.6698,
+          "source_file": "dio - Dart API docs_v2.pdf",
+          "text_snippet": "\ueddb Request Options There are two request options concepts in the Dio library: BaseOptions and Options. The BaseOptions in"
+        }
+      ],
+      "hit_at_3": false,
+      "latency_ms": 11.56
+    },
+    {
+      "question_id": "Q03",
+      "question": "Which exception type is thrown when a receive timeout occurs?",
+      "expected_chunk_id": "f502f0a601f4441d81bb45f187abfd73",
+      "expected_source_file": "dio - Dart API docs_v2.pdf",
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk_id": "d14bee56372946049e8b4b75db446da4",
+          "score": 0.6532,
+          "source_file": "dio - Dart API docs_v2.pdf",
+          "text_snippet": "/// Throws the [DioException] with /// [DioExceptionType.sendTimeout] type when timed out. /// /// `null` or `Duration.z"
+        },
+        {
+          "rank": 2,
+          "chunk_id": "5bad2cccf62043c2a0f3105355d73e72",
+          "score": 0.6532,
+          "source_file": "dio - Dart API docs_v2.pdf",
+          "text_snippet": "/// Throws the [DioException] with /// [DioExceptionType.sendTimeout] type when timed out. /// /// `null` or `Duration.z"
+        },
+        {
+          "rank": 3,
+          "chunk_id": "cf306a195cff4ad3b45310929ad0c073",
+          "score": 0.4887,
+          "source_file": "dio - Dart API docs_v3.pdf",
+          "text_snippet": "\ueddb/// /// Throws the [DioException] with /// [DioExceptionType.receiveTimeout] type when timed out. /// /// `null` or `Du"
+        }
+      ],
+      "hit_at_3": false,
+      "latency_ms": 10.66
+    },
+    {
+      "question_id": "Q04",
+      "question": "What response type should be used to receive raw bytes from a Dio request?",
+      "expected_chunk_id": "2dff71cb0f114e34a54671413b5306e8",
+      "expected_source_file": "dio - Dart API docs_v2.pdf",
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk_id": "9198748479564cfdb5f3971ab8822088",
+          "score": 0.6084,
+          "source_file": "dio - Dart API docs_v2.pdf",
+          "text_snippet": "take effect on these circumstances: /// - XHR ([HttpRequest]) does not support handling this explicitly. /// - The HTTP/"
+        },
+        {
+          "rank": 2,
+          "chunk_id": "d5cb9df0dbda42a3a4e756480ad6694e",
+          "score": 0.6084,
+          "source_file": "dio - Dart API docs_v2.pdf",
+          "text_snippet": "take effect on these circumstances: /// - XHR ([HttpRequest]) does not support handling this explicitly. /// - The HTTP/"
+        },
+        {
+          "rank": 3,
+          "chunk_id": "ba1d84eeedfa481a96121d756b9573cb",
+          "score": 0.606,
+          "source_file": "dio - Dart API docs_v3.pdf",
+          "text_snippet": "keys. bool? preserveHeaderCase; /// The type of data that [Dio] handles with options. /// /// The default value is [Resp"
+        }
+      ],
+      "hit_at_3": false,
+      "latency_ms": 11.11
+    },
+    {
+      "question_id": "Q05",
+      "question": "How do you listen to user authentication state changes in Firebase Auth?",
+      "expected_chunk_id": "d4ab0dc9f8ab4f72bbabaa79df32753b",
+      "expected_source_file": "firebase_auth - Dart API docs_v2.pdf",
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk_id": "e9f8796237c2434d9cab04f0d4d0e69c",
+          "score": 0.6501,
+          "source_file": "firebase_auth - Dart API docs_v3.pdf",
+          "text_snippet": "\ueddb Firebase Auth for Flutter pubpub v6.5.7v6.5.7 A Flutter plugin to use the Firebase Authentication API. To learn more a"
+        },
+        {
+          "rank": 2,
+          "chunk_id": "5421264e3e7046aa8baa904d67d9c2c5",
+          "score": 0.6501,
+          "source_file": "firebase_auth - Dart API docs_v3.pdf",
+          "text_snippet": "\ueddb Firebase Auth for Flutter pubpub v6.5.7v6.5.7 A Flutter plugin to use the Firebase Authentication API. To learn more a"
+        },
+        {
+          "rank": 3,
+          "chunk_id": "3fdfccbece33488a87f6743c73fd141d",
+          "score": 0.6501,
+          "source_file": "firebase_auth - Dart API docs_v3.pdf",
+          "text_snippet": "\ueddb Firebase Auth for Flutter pubpub v6.5.7v6.5.7 A Flutter plugin to use the Firebase Authentication API. To learn more a"
+        }
+      ],
+      "hit_at_3": false,
+      "latency_ms": 12.79
+    },
+    {
+      "question_id": "Q06",
+      "question": "What method is used to sign in with email and password in Firebase Auth?",
+      "expected_chunk_id": "d4ab0dc9f8ab4f72bbabaa79df32753b",
+      "expected_source_file": "firebase_auth - Dart API docs_v2.pdf",
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk_id": "8edd655f63984d708ca34724fcbbfa7f",
+          "score": 0.609,
+          "source_file": "firebase_auth - Dart API docs_v2.pdf",
+          "text_snippet": "\ueddb Firebase Auth for Flutter pubpub v6.5.7v6.5.7 A Flutter plugin to use the Firebase Authentication API. To learn more a"
+        },
+        {
+          "rank": 2,
+          "chunk_id": "8bf86cd66b3947a7b9d3929e53fc1a81",
+          "score": 0.609,
+          "source_file": "firebase_auth - Dart API docs_v2.pdf",
+          "text_snippet": "\ueddb Firebase Auth for Flutter pubpub v6.5.7v6.5.7 A Flutter plugin to use the Firebase Authentication API. To learn more a"
+        },
+        {
+          "rank": 3,
+          "chunk_id": "d05800b247f54e719331769cf61d24fe",
+          "score": 0.609,
+          "source_file": "firebase_auth - Dart API docs_v2.pdf",
+          "text_snippet": "\ueddb Firebase Auth for Flutter pubpub v6.5.7v6.5.7 A Flutter plugin to use the Firebase Authentication API. To learn more a"
+        }
+      ],
+      "hit_at_3": false,
+      "latency_ms": 10.78
+    },
+    {
+      "question_id": "Q07",
+      "question": "What property checks the currently signed in user in Firebase Auth?",
+      "expected_chunk_id": "d4ab0dc9f8ab4f72bbabaa79df32753b",
+      "expected_source_file": "firebase_auth - Dart API docs_v2.pdf",
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk_id": "66a73a8a72ce497893f1c5cf13cb4719",
+          "score": 0.6087,
+          "source_file": "firebase_auth - Dart API docs_v3.pdf",
+          "text_snippet": "\ueddb Libraries firebase_auth firebase_auth 6.5.7 18/08/2026, 20:54 firebase_auth - Dart API docs https://pub.dev/documentat"
+        },
+        {
+          "rank": 2,
+          "chunk_id": "c22beb835c7c4245bddf02f58f192c19",
+          "score": 0.6087,
+          "source_file": "firebase_auth - Dart API docs_v3.pdf",
+          "text_snippet": "\ueddb Libraries firebase_auth firebase_auth 6.5.7 18/08/2026, 20:54 firebase_auth - Dart API docs https://pub.dev/documentat"
+        },
+        {
+          "rank": 3,
+          "chunk_id": "8207e505377440f6a2efca820aa1cf1e",
+          "score": 0.6087,
+          "source_file": "firebase_auth - Dart API docs_v3.pdf",
+          "text_snippet": "\ueddb Libraries firebase_auth firebase_auth 6.5.7 18/08/2026, 20:54 firebase_auth - Dart API docs https://pub.dev/documentat"
+        }
+      ],
+      "hit_at_3": false,
+      "latency_ms": 9.67
+    },
+    {
+      "question_id": "Q08",
+      "question": "How do you sign out a user from Firebase Auth?",
+      "expected_chunk_id": "d4ab0dc9f8ab4f72bbabaa79df32753b",
+      "expected_source_file": "firebase_auth - Dart API docs_v2.pdf",
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk_id": "5421264e3e7046aa8baa904d67d9c2c5",
+          "score": 0.5949,
+          "source_file": "firebase_auth - Dart API docs_v3.pdf",
+          "text_snippet": "\ueddb Firebase Auth for Flutter pubpub v6.5.7v6.5.7 A Flutter plugin to use the Firebase Authentication API. To learn more a"
+        },
+        {
+          "rank": 2,
+          "chunk_id": "267ba428efb04bb3943d4346c6cf4870",
+          "score": 0.5949,
+          "source_file": "firebase_auth - Dart API docs_v3.pdf",
+          "text_snippet": "\ueddb Firebase Auth for Flutter pubpub v6.5.7v6.5.7 A Flutter plugin to use the Firebase Authentication API. To learn more a"
+        },
+        {
+          "rank": 3,
+          "chunk_id": "3fdfccbece33488a87f6743c73fd141d",
+          "score": 0.5949,
+          "source_file": "firebase_auth - Dart API docs_v3.pdf",
+          "text_snippet": "\ueddb Firebase Auth for Flutter pubpub v6.5.7v6.5.7 A Flutter plugin to use the Firebase Authentication API. To learn more a"
+        }
+      ],
+      "hit_at_3": false,
+      "latency_ms": 9.11
+    },
+    {
+      "question_id": "Q09",
+      "question": "Which GoRouter feature allows an inner Navigator to be displayed while keeping a BottomNavigationBar visible?",
+      "expected_chunk_id": "d9b74b09193b450d978f59244d837205",
+      "expected_source_file": "go_router - Dart API docs_v2.pdf",
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk_id": "c68f53a515464f349c54699307187b04",
+          "score": 0.56,
+          "source_file": "go_router - Dart API docs_v3.pdf",
+          "text_snippet": "\ueddb go_router A declarative routing package for Flutter that uses the Router API to provide a convenient, url- based API f"
+        },
+        {
+          "rank": 2,
+          "chunk_id": "10486b8e4e174e8ebbb92269910cdc48",
+          "score": 0.56,
+          "source_file": "go_router - Dart API docs_v3.pdf",
+          "text_snippet": "\ueddb go_router A declarative routing package for Flutter that uses the Router API to provide a convenient, url- based API f"
+        },
+        {
+          "rank": 3,
+          "chunk_id": "a1ef269b812f4725a4003779027ca431",
+          "score": 0.56,
+          "source_file": "go_router - Dart API docs_v3.pdf",
+          "text_snippet": "\ueddb go_router A declarative routing package for Flutter that uses the Router API to provide a convenient, url- based API f"
+        }
+      ],
+      "hit_at_3": false,
+      "latency_ms": 13.72
+    },
+    {
+      "question_id": "Q10",
+      "question": "How do you define path parameters in GoRouter routes?",
+      "expected_chunk_id": "d9b74b09193b450d978f59244d837205",
+      "expected_source_file": "go_router - Dart API docs_v2.pdf",
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk_id": "4fd1a1dd566e424b8a4469095d25912c",
+          "score": 0.4557,
+          "source_file": "go_router - Dart API docs_v2.pdf",
+          "text_snippet": "\ueddb Libraries go_router A declarative router for Flutter based on Navigation 2 supporting deep linking, data-driven routes"
+        },
+        {
+          "rank": 2,
+          "chunk_id": "3180597f25ed4407b975d2ddb3b7f5af",
+          "score": 0.4557,
+          "source_file": "go_router - Dart API docs_v2.pdf",
+          "text_snippet": "\ueddb Libraries go_router A declarative router for Flutter based on Navigation 2 supporting deep linking, data-driven routes"
+        },
+        {
+          "rank": 3,
+          "chunk_id": "1c128300759f4df7b4e7e9a4ae7633c6",
+          "score": 0.4557,
+          "source_file": "go_router - Dart API docs_v2.pdf",
+          "text_snippet": "\ueddb Libraries go_router A declarative router for Flutter based on Navigation 2 supporting deep linking, data-driven routes"
+        }
+      ],
+      "hit_at_3": false,
+      "latency_ms": 10.62
+    },
+    {
+      "question_id": "Q11",
+      "question": "How do you configure redirection logic in GoRouter?",
+      "expected_chunk_id": "d9b74b09193b450d978f59244d837205",
+      "expected_source_file": "go_router - Dart API docs_v2.pdf",
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk_id": "56d1758f7f04460eab1c58eda75de691",
+          "score": 0.5092,
+          "source_file": "go_router - Dart API docs_v2.pdf",
+          "text_snippet": "topics: Getting started Upgrade an existing app Configuration Navigation Redirection Web Deep linking Transition animati"
+        },
+        {
+          "rank": 2,
+          "chunk_id": "3f2e18bd63bc454cbe6f73eac5548356",
+          "score": 0.5092,
+          "source_file": "go_router - Dart API docs_v2.pdf",
+          "text_snippet": "topics: Getting started Upgrade an existing app Configuration Navigation Redirection Web Deep linking Transition animati"
+        },
+        {
+          "rank": 3,
+          "chunk_id": "013a7c8dc60943149bde92f63a829d71",
+          "score": 0.5044,
+          "source_file": "go_router - Dart API docs_v3.pdf",
+          "text_snippet": "topics: Getting started Upgrade an existing app Configuration Navigation Redirection Web Deep linking Transition animati"
+        }
+      ],
+      "hit_at_3": false,
+      "latency_ms": 11.09
+    },
+    {
+      "question_id": "Q12",
+      "question": "How do you trigger imperative navigation to a route in GoRouter?",
+      "expected_chunk_id": "d9b74b09193b450d978f59244d837205",
+      "expected_source_file": "go_router - Dart API docs_v2.pdf",
+      "retrieved": [
+        {
+          "rank": 1,
+          "chunk_id": "7178bb5d4cf44f6a827cdd8ed3db93c4",
+          "score": 0.5501,
+          "source_file": "go_router - Dart API docs_v2.pdf",
+          "text_snippet": "\ueddb Libraries go_router A declarative router for Flutter based on Navigation 2 supporting deep linking, data-driven routes"
+        },
+        {
+          "rank": 2,
+          "chunk_id": "c3222564263b4d6c90786942787adb24",
+          "score": 0.5501,
+          "source_file": "go_router - Dart API docs_v2.pdf",
+          "text_snippet": "\ueddb Libraries go_router A declarative router for Flutter based on Navigation 2 supporting deep linking, data-driven routes"
+        },
+        {
+          "rank": 3,
+          "chunk_id": "bd2dcd01f63b4a5c8ba24c4ec26df970",
+          "score": 0.5501,
+          "source_file": "go_router - Dart API docs_v2.pdf",
+          "text_snippet": "\ueddb Libraries go_router A declarative router for Flutter based on Navigation 2 supporting deep linking, data-driven routes"
+        }
+      ],
+      "hit_at_3": false,
+      "latency_ms": 9.5
+    }
+  ]
+}

@@ -1,0 +1,166 @@
+{
+  "total_misses": 12,
+  "tally": {
+    "R": 12,
+    "G": 0,
+    "Not-In-Corpus": 0
+  },
+  "inspections": [
+    {
+      "question_id": "Q01",
+      "question": "How do you create a Dio instance with default options?",
+      "classification": "R",
+      "expected_chunk_id": "e808fa6db2b74ec595f35bf539a02098",
+      "expected_source_file": "dio - Dart API docs_v2.pdf",
+      "retrieved_top3_chunk_ids": [
+        "9cc698e0d8aa42c0a2119c7993ef549b",
+        "a1a00fa537da456ea1ce8ca06abaf478",
+        "f1ba2427aa7849dc9c7d30771244075e"
+      ],
+      "evidence": "Expected chunk e808fa6db2b74ec595f35bf539a02098 ('dio - Dart API docs_v2.pdf') exists in store and ranked at #10 in top-25, but was excluded from Top-3."
+    },
+    {
+      "question_id": "Q02",
+      "question": "What property is used to configure the connection timeout in Dio?",
+      "classification": "R",
+      "expected_chunk_id": "e808fa6db2b74ec595f35bf539a02098",
+      "expected_source_file": "dio - Dart API docs_v2.pdf",
+      "retrieved_top3_chunk_ids": [
+        "f4a4f01476d04d96ad6dc5590c5f63b0",
+        "3dcded19d2f34058b7c432a296a81980",
+        "4cd008a565774c17a2bc9c929d616d01"
+      ],
+      "evidence": "Expected chunk e808fa6db2b74ec595f35bf539a02098 ('dio - Dart API docs_v2.pdf') was absent even from Top-25 search results due to dense vector similarity gap."
+    },
+    {
+      "question_id": "Q03",
+      "question": "Which exception type is thrown when a receive timeout occurs?",
+      "classification": "R",
+      "expected_chunk_id": "f502f0a601f4441d81bb45f187abfd73",
+      "expected_source_file": "dio - Dart API docs_v2.pdf",
+      "retrieved_top3_chunk_ids": [
+        "d14bee56372946049e8b4b75db446da4",
+        "5bad2cccf62043c2a0f3105355d73e72",
+        "cf306a195cff4ad3b45310929ad0c073"
+      ],
+      "evidence": "Expected chunk f502f0a601f4441d81bb45f187abfd73 ('dio - Dart API docs_v2.pdf') was absent even from Top-25 search results due to dense vector similarity gap."
+    },
+    {
+      "question_id": "Q04",
+      "question": "What response type should be used to receive raw bytes from a Dio request?",
+      "classification": "R",
+      "expected_chunk_id": "2dff71cb0f114e34a54671413b5306e8",
+      "expected_source_file": "dio - Dart API docs_v2.pdf",
+      "retrieved_top3_chunk_ids": [
+        "9198748479564cfdb5f3971ab8822088",
+        "d5cb9df0dbda42a3a4e756480ad6694e",
+        "ba1d84eeedfa481a96121d756b9573cb"
+      ],
+      "evidence": "Expected chunk 2dff71cb0f114e34a54671413b5306e8 ('dio - Dart API docs_v2.pdf') was absent even from Top-25 search results due to dense vector similarity gap."
+    },
+    {
+      "question_id": "Q05",
+      "question": "How do you listen to user authentication state changes in Firebase Auth?",
+      "classification": "R",
+      "expected_chunk_id": "d4ab0dc9f8ab4f72bbabaa79df32753b",
+      "expected_source_file": "firebase_auth - Dart API docs_v2.pdf",
+      "retrieved_top3_chunk_ids": [
+        "e9f8796237c2434d9cab04f0d4d0e69c",
+        "5421264e3e7046aa8baa904d67d9c2c5",
+        "3fdfccbece33488a87f6743c73fd141d"
+      ],
+      "evidence": "Expected chunk d4ab0dc9f8ab4f72bbabaa79df32753b ('firebase_auth - Dart API docs_v2.pdf') exists in store and ranked at #20 in top-25, but was excluded from Top-3."
+    },
+    {
+      "question_id": "Q06",
+      "question": "What method is used to sign in with email and password in Firebase Auth?",
+      "classification": "R",
+      "expected_chunk_id": "d4ab0dc9f8ab4f72bbabaa79df32753b",
+      "expected_source_file": "firebase_auth - Dart API docs_v2.pdf",
+      "retrieved_top3_chunk_ids": [
+        "8edd655f63984d708ca34724fcbbfa7f",
+        "8bf86cd66b3947a7b9d3929e53fc1a81",
+        "d05800b247f54e719331769cf61d24fe"
+      ],
+      "evidence": "Expected chunk d4ab0dc9f8ab4f72bbabaa79df32753b ('firebase_auth - Dart API docs_v2.pdf') exists in store and ranked at #10 in top-25, but was excluded from Top-3."
+    },
+    {
+      "question_id": "Q07",
+      "question": "What property checks the currently signed in user in Firebase Auth?",
+      "classification": "R",
+      "expected_chunk_id": "d4ab0dc9f8ab4f72bbabaa79df32753b",
+      "expected_source_file": "firebase_auth - Dart API docs_v2.pdf",
+      "retrieved_top3_chunk_ids": [
+        "66a73a8a72ce497893f1c5cf13cb4719",
+        "c22beb835c7c4245bddf02f58f192c19",
+        "8207e505377440f6a2efca820aa1cf1e"
+      ],
+      "evidence": "Expected chunk d4ab0dc9f8ab4f72bbabaa79df32753b ('firebase_auth - Dart API docs_v2.pdf') was absent even from Top-25 search results due to dense vector similarity gap."
+    },
+    {
+      "question_id": "Q08",
+      "question": "How do you sign out a user from Firebase Auth?",
+      "classification": "R",
+      "expected_chunk_id": "d4ab0dc9f8ab4f72bbabaa79df32753b",
+      "expected_source_file": "firebase_auth - Dart API docs_v2.pdf",
+      "retrieved_top3_chunk_ids": [
+        "5421264e3e7046aa8baa904d67d9c2c5",
+        "267ba428efb04bb3943d4346c6cf4870",
+        "3fdfccbece33488a87f6743c73fd141d"
+      ],
+      "evidence": "Expected chunk d4ab0dc9f8ab4f72bbabaa79df32753b ('firebase_auth - Dart API docs_v2.pdf') exists in store and ranked at #20 in top-25, but was excluded from Top-3."
+    },
+    {
+      "question_id": "Q09",
+      "question": "Which GoRouter feature allows an inner Navigator to be displayed while keeping a BottomNavigationBar visible?",
+      "classification": "R",
+      "expected_chunk_id": "d9b74b09193b450d978f59244d837205",
+      "expected_source_file": "go_router - Dart API docs_v2.pdf",
+      "retrieved_top3_chunk_ids": [
+        "c68f53a515464f349c54699307187b04",
+        "10486b8e4e174e8ebbb92269910cdc48",
+        "a1ef269b812f4725a4003779027ca431"
+      ],
+      "evidence": "Expected chunk d9b74b09193b450d978f59244d837205 ('go_router - Dart API docs_v2.pdf') exists in store and ranked at #19 in top-25, but was excluded from Top-3."
+    },
+    {
+      "question_id": "Q10",
+      "question": "How do you define path parameters in GoRouter routes?",
+      "classification": "R",
+      "expected_chunk_id": "d9b74b09193b450d978f59244d837205",
+      "expected_source_file": "go_router - Dart API docs_v2.pdf",
+      "retrieved_top3_chunk_ids": [
+        "4fd1a1dd566e424b8a4469095d25912c",
+        "3180597f25ed4407b975d2ddb3b7f5af",
+        "1c128300759f4df7b4e7e9a4ae7633c6"
+      ],
+      "evidence": "Expected chunk d9b74b09193b450d978f59244d837205 ('go_router - Dart API docs_v2.pdf') was absent even from Top-25 search results due to dense vector similarity gap."
+    },
+    {
+      "question_id": "Q11",
+      "question": "How do you configure redirection logic in GoRouter?",
+      "classification": "R",
+      "expected_chunk_id": "d9b74b09193b450d978f59244d837205",
+      "expected_source_file": "go_router - Dart API docs_v2.pdf",
+      "retrieved_top3_chunk_ids": [
+        "56d1758f7f04460eab1c58eda75de691",
+        "3f2e18bd63bc454cbe6f73eac5548356",
+        "013a7c8dc60943149bde92f63a829d71"
+      ],
+      "evidence": "Expected chunk d9b74b09193b450d978f59244d837205 ('go_router - Dart API docs_v2.pdf') was absent even from Top-25 search results due to dense vector similarity gap."
+    },
+    {
+      "question_id": "Q12",
+      "question": "How do you trigger imperative navigation to a route in GoRouter?",
+      "classification": "R",
+      "expected_chunk_id": "d9b74b09193b450d978f59244d837205",
+      "expected_source_file": "go_router - Dart API docs_v2.pdf",
+      "retrieved_top3_chunk_ids": [
+        "7178bb5d4cf44f6a827cdd8ed3db93c4",
+        "c3222564263b4d6c90786942787adb24",
+        "bd2dcd01f63b4a5c8ba24c4ec26df970"
+      ],
+      "evidence": "Expected chunk d9b74b09193b450d978f59244d837205 ('go_router - Dart API docs_v2.pdf') was absent even from Top-25 search results due to dense vector similarity gap."
+    }
+  ]
+}

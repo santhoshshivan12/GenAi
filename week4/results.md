@@ -24,7 +24,7 @@ A 12-question ground-truth evaluation set was created across six SDK v2 and v3 d
 ## 2. Baseline Evaluation
 
 - **Baseline Hit@3**: **0 / 12 (0.0%)**
-- **Baseline p50 Latency**: **10.94 ms**
+- **Baseline p50 Latency**: **13.27 ms**
 
 All 12 queries failed top-3 retrieval in the baseline evaluation because the dense embedding model alone struggled with exact symbol tokens (`DioExceptionType`, `ShellRoute`, `authStateChanges`) or ranked relevant chunks outside top-3.
 
@@ -60,7 +60,7 @@ Because all 12 baseline failures were Retrieval Failures ($R=12$) caused by dens
 ## 5. Post-Improvement Evaluation (After)
 
 - **After Hit@3**: **7 / 12 (58.33%)**
-- **After p50 Latency**: **38.67 ms**
+- **After p50 Latency**: **18.04 ms**
 
 ---
 
@@ -70,7 +70,7 @@ Because all 12 baseline failures were Retrieval Failures ($R=12$) caused by dens
 |---|:---:|:---:|:---:|
 | **Hit@3 Score** | **0 / 12** | **7 / 12** | **+7** |
 | **Hit Rate (%)** | **0.0%** | **58.33%** | **+58.33%** |
-| **p50 Latency** | **10.94 ms** | **38.67 ms** | **+27.73 ms** |
+| **p50 Latency** | **13.27 ms** | **18.04 ms** | **+4.77 ms** |
 
 ---
 
