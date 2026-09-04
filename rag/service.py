@@ -52,13 +52,11 @@ class RAGService:
         self.retriever = Retriever(self.store, self.embeddings)
         self.openrouter_api_key = os.getenv("OPENROUTER_API_KEY", "").strip()
         self.openrouter_model = os.getenv("OPENROUTER_MODEL", "openai/gpt-4o-mini").strip()
+        self.openrouter_max_tokens = int(os.getenv("OPENROUTER_MAX_TOKENS", "800"))
         self.openrouter_base_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1").rstrip("/")
         self.openrouter_http_referer = os.getenv("OPENROUTER_HTTP_REFERER", "http://127.0.0.1:8000").strip()
         self.openrouter_title = os.getenv("OPENROUTER_TITLE", "RAG Demo").strip()
 
-        self.openai_api_key = os.getenv("OPENAI_API_KEY", "").strip()
-        self.openai_model = os.getenv("OPENAI_MODEL", "gpt-4.1-mini").strip()
-        self.openai_base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1").rstrip("/")
         self._hybrid_retriever = None
 
         # Automatically ingest v2 and v3 default documents on startup if store is empty
@@ -775,7 +773,7 @@ class RAGService:
         debug: bool = False,
         retrieval_mode: str = "hybrid",
     ) -> dict[str, Any]:
-        provider_key = self.openrouter_api_key or self.openai_api_key
+        provider_key = self.openrouter_api_key
         if retrieval_mode == "hybrid":
             fallback_hits = self.get_hybrid_retriever().search(question, top_k=top_k, candidate_k=25)
         elif retrieval_mode == "multiquery":
@@ -1015,7 +1013,7 @@ class RAGService:
         debug: bool = False,
         max_retries: int = 2,
     ) -> tuple[RAGAnswer | None, dict[str, Any]]:
-        provider_key = self.openrouter_api_key or self.openai_api_key
+        provider_key = self.openrouter_api_key
         if not provider_key:
             return None, {"reason": "no_llm_key"}
 
@@ -1080,28 +1078,25 @@ class RAGService:
         }
 
     def _active_model_name(self) -> str:
-        return self.openrouter_model if self.openrouter_api_key else self.openai_model
+        return self.openrouter_model
 
     def _call_llm(
         self,
         messages: list[dict[str, Any]],
         tools: list[dict[str, Any]] | None = None,
     ) -> dict[str, Any] | None:
-        provider_key = self.openrouter_api_key or self.openai_api_key
+        provider_key = self.openrouter_api_key
         if not provider_key:
             return None
 
-        if self.openrouter_api_key:
-            model = self.openrouter_model
-            base_url = self.openrouter_base_url
-        else:
-            model = self.openai_model
-            base_url = self.openai_base_url
+        model = self.openrouter_model
+        base_url = self.openrouter_base_url
 
         payload: dict[str, Any] = {
             "model": model,
             "messages": messages,
             "temperature": 0.2,
+            "max_tokens": self.openrouter_max_tokens,
         }
         if tools is not None:
             payload["tools"] = tools
@@ -1113,15 +1108,9 @@ class RAGService:
             headers={
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {provider_key}",
-                **(
-                    {
-                        "HTTP-Referer": self.openrouter_http_referer,
-                        "X-Title": self.openrouter_title,
-                        "X-OpenRouter-Metadata": "enabled",
-                    }
-                    if self.openrouter_api_key
-                    else {}
-                ),
+                "HTTP-Referer": self.openrouter_http_referer,
+                "X-Title": self.openrouter_title,
+                "X-OpenRouter-Metadata": "enabled",
             },
             method="POST",
         )

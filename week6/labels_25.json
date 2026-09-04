@@ -1,0 +1,252 @@
+{
+  "labelled_at": "2026-09-04",
+  "judge_run_before_labels": false,
+  "criterion": "Does the answer correctly and usefully answer the question using the supplied documentation?",
+  "labels": [
+    {
+      "case_id": "case_001",
+      "trace_id": "198b1e2a414041b7a2488491bb28af76",
+      "human_label": "PASS",
+      "taxonomy_mode": "correct_answer_supported",
+      "rationale": "The answer directly addresses the question and is supported by the retrieved documentation."
+    },
+    {
+      "case_id": "case_002",
+      "trace_id": "6ea11b46a8ca4f94afe33858da825bb7",
+      "human_label": "FAIL",
+      "taxonomy_mode": "dio_connection_timeout_answer_uses_receive_timeout",
+      "rationale": "The answer describes receive timeout behavior instead of naming connectTimeout."
+    },
+    {
+      "case_id": "case_003",
+      "trace_id": "54b5aa0fa81843d59d7d94778b6e8305",
+      "human_label": "PASS",
+      "taxonomy_mode": "correct_answer_supported",
+      "rationale": "The answer directly addresses the question and is supported by the retrieved documentation."
+    },
+    {
+      "case_id": "case_004",
+      "trace_id": "e9479597e4d740ed96b6e3f3665bef7f",
+      "human_label": "PASS",
+      "taxonomy_mode": "correct_answer_supported",
+      "rationale": "The answer directly addresses the question and is supported by the retrieved documentation."
+    },
+    {
+      "case_id": "case_005",
+      "trace_id": "50975ba70a39437cba4d8320211eff36",
+      "human_label": "PASS",
+      "taxonomy_mode": "correct_answer_supported",
+      "rationale": "The answer directly addresses the question and is supported by the retrieved documentation."
+    },
+    {
+      "case_id": "case_006",
+      "trace_id": "2b96b09d958e4dcd88de845f133e89b9",
+      "human_label": "FAIL",
+      "taxonomy_mode": "dio_authorization_header_abstention",
+      "rationale": "The assistant abstains instead of answering the Dio authorization-header question."
+    },
+    {
+      "case_id": "case_007",
+      "trace_id": "5c58eb8f69624a4dbef7b00070fe1eca",
+      "human_label": "PASS",
+      "taxonomy_mode": "correct_answer_supported",
+      "rationale": "The answer directly addresses the question and is supported by the retrieved documentation."
+    },
+    {
+      "case_id": "case_008",
+      "trace_id": "54d4eebe789b44cb9204b259df9a1634",
+      "human_label": "PASS",
+      "taxonomy_mode": "correct_answer_supported",
+      "rationale": "The answer directly addresses the question and is supported by the retrieved documentation."
+    },
+    {
+      "case_id": "case_009",
+      "trace_id": "aba6f06d82f44b83849a11b2ffe41a12",
+      "human_label": "PASS",
+      "taxonomy_mode": "correct_answer_supported",
+      "rationale": "The answer directly addresses the question and is supported by the retrieved documentation."
+    },
+    {
+      "case_id": "case_010",
+      "trace_id": "543707efd7a643bdb05f32055e513b3f",
+      "human_label": "PASS",
+      "taxonomy_mode": "correct_answer_supported",
+      "rationale": "The answer directly addresses the question and is supported by the retrieved documentation."
+    },
+    {
+      "case_id": "case_011",
+      "trace_id": "ee45c541fcb54652a28b0e92bc428d16",
+      "human_label": "FAIL",
+      "taxonomy_mode": "firebase_auth_question_abstention",
+      "rationale": "The assistant returns I do not know for a Firebase Auth task."
+    },
+    {
+      "case_id": "case_012",
+      "trace_id": "10d9b4372c9e4aeda1d1eb188aa9be98",
+      "human_label": "FAIL",
+      "taxonomy_mode": "firebase_auth_question_abstention",
+      "rationale": "The assistant returns I do not know for a Firebase Auth task."
+    },
+    {
+      "case_id": "case_013",
+      "trace_id": "f964bd08220347c789e9ece62cf191ea",
+      "human_label": "FAIL",
+      "taxonomy_mode": "firebase_auth_question_abstention",
+      "rationale": "The assistant returns I do not know for a Firebase Auth task."
+    },
+    {
+      "case_id": "case_014",
+      "trace_id": "1842698b3ccc4c188b60458cf93afa7f",
+      "human_label": "FAIL",
+      "taxonomy_mode": "firebase_auth_question_abstention",
+      "rationale": "The assistant returns I do not know for a Firebase Auth task."
+    },
+    {
+      "case_id": "case_015",
+      "trace_id": "645941f3de794c8eaa33cd1510493cad",
+      "human_label": "FAIL",
+      "taxonomy_mode": "firebase_auth_question_abstention",
+      "rationale": "The assistant returns I do not know for a Firebase Auth task."
+    },
+    {
+      "case_id": "case_016",
+      "trace_id": "e097dc9e7a3541b19e1839e4a565683d",
+      "human_label": "FAIL",
+      "taxonomy_mode": "firebase_auth_question_abstention",
+      "rationale": "The assistant returns I do not know for a Firebase Auth task."
+    },
+    {
+      "case_id": "case_017",
+      "trace_id": "7ab995134750405bb2bacc385091c67f",
+      "human_label": "FAIL",
+      "taxonomy_mode": "gorouter_question_abstention",
+      "rationale": "The assistant returns I do not know for a GoRouter task."
+    },
+    {
+      "case_id": "case_018",
+      "trace_id": "48a7bcc4d0d6409c8a41fe8d5229bb01",
+      "human_label": "FAIL",
+      "taxonomy_mode": "gorouter_question_abstention",
+      "rationale": "The assistant returns I do not know for a GoRouter task."
+    },
+    {
+      "case_id": "case_019",
+      "trace_id": "0e7d861057444fae88b0707c36e353ad",
+      "human_label": "FAIL",
+      "taxonomy_mode": "gorouter_question_abstention",
+      "rationale": "The assistant returns I do not know for a GoRouter task."
+    },
+    {
+      "case_id": "case_020",
+      "trace_id": "5bd76108b01b497dbd9a1169c4e62683",
+      "human_label": "PASS",
+      "taxonomy_mode": "correct_answer_supported",
+      "rationale": "The answer directly addresses the question and is supported by the retrieved documentation."
+    },
+    {
+      "case_id": "case_021",
+      "trace_id": "04a38df9504d4b4f8e0bd81abea99c3d",
+      "human_label": "PASS",
+      "taxonomy_mode": "correct_answer_supported",
+      "rationale": "The answer directly addresses the question and is supported by the retrieved documentation."
+    },
+    {
+      "case_id": "case_022",
+      "trace_id": "0bb7b79d532b4140ab88c6d5131b49b3",
+      "human_label": "FAIL",
+      "taxonomy_mode": "gorouter_question_abstention",
+      "rationale": "The assistant returns I do not know for a GoRouter task."
+    },
+    {
+      "case_id": "case_023",
+      "trace_id": "81069905e4f141ce87187510505d86af",
+      "human_label": "FAIL",
+      "taxonomy_mode": "gorouter_question_abstention",
+      "rationale": "The assistant returns I do not know for a GoRouter task."
+    },
+    {
+      "case_id": "case_024",
+      "trace_id": "a0ca9cba169c4c80b2e798bb3c73c71b",
+      "human_label": "FAIL",
+      "taxonomy_mode": "gorouter_question_abstention",
+      "rationale": "The assistant returns I do not know for a GoRouter task."
+    },
+    {
+      "case_id": "case_025",
+      "trace_id": "829c6b42d1c249ed8037ad513b681c05",
+      "human_label": "FAIL",
+      "taxonomy_mode": "gorouter_question_abstention",
+      "rationale": "The assistant returns I do not know for a GoRouter task."
+    },
+    {
+      "case_id": "case_026",
+      "trace_id": "81fce40341a54fdcb60b54929d39263e",
+      "human_label": "PASS",
+      "taxonomy_mode": "correct_answer_supported",
+      "rationale": "The answer directly addresses the question and is supported by the retrieved documentation."
+    },
+    {
+      "case_id": "case_027",
+      "trace_id": "81e155a96cad4ffdb236a3a79adf4e0b",
+      "human_label": "PASS",
+      "taxonomy_mode": "correct_answer_supported",
+      "rationale": "The answer directly addresses the question and is supported by the retrieved documentation."
+    },
+    {
+      "case_id": "case_028",
+      "trace_id": "e9eaba1aa90c407283aa8d9e6bd6d9d0",
+      "human_label": "PASS",
+      "taxonomy_mode": "correct_answer_supported",
+      "rationale": "The answer directly addresses the question and is supported by the retrieved documentation."
+    },
+    {
+      "case_id": "case_029",
+      "trace_id": "7115f009569a494987a0c5b00d51fd22",
+      "human_label": "PASS",
+      "taxonomy_mode": "correct_answer_supported",
+      "rationale": "The answer directly addresses the question and is supported by the retrieved documentation."
+    },
+    {
+      "case_id": "case_030",
+      "trace_id": "bcb1d56f7c0e49489b183442584d9116",
+      "human_label": "PASS",
+      "taxonomy_mode": "appropriate_abstention_for_missing_evidence",
+      "rationale": "The supplied documents do not establish the requested change or bug fix, so abstaining is correct."
+    },
+    {
+      "case_id": "case_031",
+      "trace_id": "09808a6aca0341b09bbdb37a805f3262",
+      "human_label": "FAIL",
+      "taxonomy_mode": "missing_dio_version_warning",
+      "rationale": "The answer fails to identify that the proposed API is not established for the stated v2 documentation."
+    },
+    {
+      "case_id": "case_032",
+      "trace_id": "c91d10001e5b4fddb10fdedc7ff5ba8e",
+      "human_label": "PASS",
+      "taxonomy_mode": "correct_answer_supported",
+      "rationale": "The answer directly addresses the question and is supported by the retrieved documentation."
+    },
+    {
+      "case_id": "case_033",
+      "trace_id": "8e0549818704454f94e414e4955e043f",
+      "human_label": "PASS",
+      "taxonomy_mode": "correct_answer_supported",
+      "rationale": "The answer directly addresses the question and is supported by the retrieved documentation."
+    },
+    {
+      "case_id": "case_034",
+      "trace_id": "6fb6853c122a4f93a342ff33eb348ebb",
+      "human_label": "PASS",
+      "taxonomy_mode": "correct_answer_supported",
+      "rationale": "The answer directly addresses the question and is supported by the retrieved documentation."
+    },
+    {
+      "case_id": "case_035",
+      "trace_id": "be181c902ca244f2b5fae4f0ce665afb",
+      "human_label": "PASS",
+      "taxonomy_mode": "appropriate_abstention_for_missing_evidence",
+      "rationale": "The supplied documents do not establish the requested change or bug fix, so abstaining is correct."
+    }
+  ]
+}
