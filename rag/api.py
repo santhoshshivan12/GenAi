@@ -667,7 +667,7 @@ def render_page(
         <a class="tab-link {'active' if active_tab == 'trace_review' else ''}" href="/?tab=trace_review">Trace Review</a>
       </nav>
       <section class="tab-panel {'active' if active_tab == 'chat' else ''}">{chat_html}</section>
-      <section class="tab-panel {'active' if active_tab == 'trace_review' else ''}"><section class="panel"><h2>Trace Review</h2><p class="small">Enter a trace ID to have the configured LLM review it and append the result to <code>week5/notes.md</code>.</p><form action="/trace-review" method="post" class="search-form"><select name="trace_id"><option value="">Select a complete trace ID</option>{trace_options}</select><button type="submit">Review Trace</button><button type="submit" name="trace_id" value="auto">Review Random Trace</button></form></section></section>
+      <section class="tab-panel {'active' if active_tab == 'trace_review' else ''}"><section class="panel"><h2>Trace Review</h2><p class="small">Enter a trace ID to have the OpenRouter LLM review it and append the result to <code>week5/notes.md</code>.</p><form action="/trace-review" method="post" class="search-form"><select name="trace_id"><option value="">Select a complete trace ID</option>{trace_options}</select><button type="submit">Review Trace</button><button type="submit" name="trace_id" value="auto">Review Random Trace</button></form></section></section>
 <section class="tab-panel {'active' if active_tab == 'evaluation' else ''}">
       <div class="metrics-banner">
         <div class="metric-card">

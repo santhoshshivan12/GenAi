@@ -1,0 +1,3 @@
+Date: 2026-09-04
+
+Prediction: Adding the two appropriate-abstention disagreements as few-shot examples will raise human/G-Eval agreement from 94.29% to 100% by changing both v1 false failures to PASS without changing the other 33 decisions.
