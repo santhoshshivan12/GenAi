@@ -9,6 +9,7 @@ from fastapi import Body, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 from rag.service import RAGService
+from rag.config import TRACE_FILE
 from rag.utils import snippet
 
 app = FastAPI(title="RAG Demo - Week 4 Hybrid Evaluation", version="2.0.0")
@@ -248,9 +249,53 @@ def render_comparison_view(comparison: dict[str, Any]) -> str:
     """
 
 
+def render_chat_view(question: str, result: dict[str, Any] | None, top_k: int) -> str:
+    messages = """
+      <div class="chat-message assistant-message">
+        <div class="chat-role">RAG Assistant</div>
+        <p>Ask a question about your indexed documents. I combine semantic similarity and BM25 keyword retrieval, re-rank the merged candidates, and answer only from the returned chunks.</p>
+      </div>
+    """
+    if result is not None:
+        source_items = "".join(
+            f"<li>{escape(str(item.get('filename') or item.get('document_filename') or 'Unknown'))} ? chunk {item.get('chunk_index', 0)}</li>"
+            for item in result.get("sources", [])
+        )
+        messages += f"""
+          <div class="chat-message user-message"><div class="chat-role">You</div><p>{escape(question)}</p></div>
+          <div class="chat-message assistant-message">
+            <div class="chat-role">RAG Assistant</div>
+            <pre>{escape(result.get('answer', ''))}</pre>
+            <details class="chat-sources"><summary>Retrieved sources ({len(result.get('chunks', []))})</summary><ul>{source_items or '<li>No sources returned</li>'}</ul></details>
+          </div>
+        """
+
+    selected_top_k = lambda value: "selected" if top_k == value else ""
+    return f"""
+      <section class="chat-shell">
+        <div class="chat-toolbar">
+          <div><strong>Hybrid RAG Chat</strong><span>Semantic + BM25 keyword retrieval ? RRF re-rank</span></div>
+          <div class="retrieval-status">Top 25 semantic + Top 25 BM25 ? Top {top_k}</div>
+        </div>
+        <div class="chat-messages">{messages}</div>
+        <form action="/" method="get" class="chat-input-form">
+          <input type="hidden" name="tab" value="chat" />
+          <input type="hidden" name="retrieval_mode" value="hybrid" />
+          <input name="question" type="text" value="{escape(question)}" placeholder="Ask about the indexed documents?" required autofocus />
+          <label for="chat-top-k">Top N</label>
+          <select id="chat-top-k" name="top_k">
+            <option value="3" {selected_top_k(3)}>3</option><option value="4" {selected_top_k(4)}>4</option><option value="5" {selected_top_k(5)}>5</option>
+          </select>
+          <button type="submit">Send</button>
+        </form>
+      </section>
+    """
+
 def render_page(
-    question: str = "",
     result: dict[str, Any] | None = None,
+    question: str = "",
+    active_tab: str = "chat",
+    top_k: int = 3,
     comparison: dict[str, Any] | None = None,
     retrieval_mode: str = "compare",
     debug: bool = False,
@@ -259,20 +304,45 @@ def render_page(
     documents = service.documents_payload()
     chunks = service.chunks_payload(limit=25)
     metrics = get_benchmark_metrics()
+    trace_ids = []
+    if TRACE_FILE.exists():
+        for line in TRACE_FILE.read_text(encoding="utf-8").splitlines():
+            try:
+                item = json.loads(line)
+                if item.get("trace_id") and item["trace_id"] not in trace_ids:
+                    trace_ids.append(item["trace_id"])
+            except json.JSONDecodeError:
+                continue
+    trace_options = "".join("<option value=\"" + escape(t) + "\">" + escape(t) + "</option>" for t in trace_ids)
 
     comparison_html = ""
     if comparison is not None:
         comparison_html = render_comparison_view(comparison)
 
     single_result_html = ""
-    if result is not None and comparison is None:
+    if result is not None and comparison is None and active_tab == "evaluation":
         sources_html = "".join(format_source_item(item) for item in result.get("sources", []))
         context_html = "".join(format_context_item(block) for block in result.get("context", []))
+        trace_id = result.get("trace_id", "Not recorded")
+        debug_data = result.get("debug", {})
+        retrieval_debug = debug_data.get("retrieval", {})
+        trace_details = ""
+        if debug:
+            trace_details = f"""
+            <p class="small">Prompt version: <code>rag-answer-v1</code> · Search query: <code>{escape(str(retrieval_debug.get('tool_query', result.get('question', ''))))}</code></p>
+            <p class="small">Retrieved chunks recorded: {len(retrieval_debug.get('hits', result.get('chunks', [])))}</p>
+            """
         single_result_html = f"""
         <section class="panel" style="margin-top:20px;">
           <h2>Grounded Answer ({escape(retrieval_mode.upper())} Mode)</h2>
           <pre>{escape(result.get("answer", ""))}</pre>
           <p class="small">Used LLM: {escape(str(result.get("used_llm", False)))}</p>
+          <div class="trace-card">
+            <strong>Week 5 Trace</strong>
+            <span class="small">Trace ID: <code>{escape(str(trace_id))}</code></span>
+            <span class="small">Saved to <code>data/traces.jsonl</code> · replayable from the trace alone</span>
+            {trace_details}
+          </div>
           <h3 style="margin-top:14px;">Retrieved context blocks</h3>
           <ul>{context_html or "<li>No context available</li>"}</ul>
           <h3 style="margin-top:14px;">Sources</h3>
@@ -339,6 +409,7 @@ def render_page(
 
     question_value = escape(question)
 
+    chat_html = render_chat_view(question, result if active_tab == "chat" else None, top_k)
     return f"""<!doctype html>
 <html lang="en">
   <head>
@@ -413,6 +484,16 @@ def render_page(
         border-radius: 16px;
         padding: 20px;
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+      }}
+      .trace-card {{
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        margin: 14px 0;
+        padding: 12px;
+        border: 1px solid rgba(56, 189, 248, 0.35);
+        border-radius: 10px;
+        background: rgba(14, 116, 144, 0.12);
       }}
       h2 {{ margin: 0 0 14px; font-size: 20px; font-weight: 700; color: #f8fafc; }}
       h3 {{ margin: 0 0 10px; font-size: 16px; font-weight: 700; }}
@@ -534,6 +615,30 @@ def render_page(
       }}
 
       /* Tables */
+      .tabs {{ display:flex; gap:8px; margin:22px 0 18px; border-bottom:1px solid var(--border); }}
+      .tab-link {{ padding:10px 16px; color:var(--muted); border-bottom:2px solid transparent; font-weight:700; }}
+      .tab-link.active {{ color:var(--accent); border-color:var(--accent); }}
+      .tab-panel {{ display:none; }}
+      .tab-panel.active {{ display:block; }}
+      .chat-shell {{ max-width:900px; margin:0 auto; background:var(--panel); border:1px solid var(--border); border-radius:14px; overflow:hidden; }}
+      .chat-toolbar {{ padding:16px 18px; display:flex; justify-content:space-between; gap:14px; align-items:center; background:var(--panel-2); border-bottom:1px solid var(--border); }}
+      .chat-toolbar strong, .chat-toolbar span {{ display:block; }}
+      .chat-toolbar span {{ font-size:12px; color:var(--muted); margin-top:4px; }}
+      .retrieval-status {{ color:var(--success); font-size:12px; font-weight:700; text-align:right; }}
+      .chat-messages {{ min-height:390px; padding:20px; display:flex; flex-direction:column; gap:14px; background:#0d1422; }}
+      .chat-message {{ max-width:85%; padding:13px 15px; border-radius:12px; line-height:1.55; }}
+      .assistant-message {{ align-self:flex-start; background:var(--panel-2); border:1px solid var(--border); }}
+      .user-message {{ align-self:flex-end; background:#075985; }}
+      .chat-role {{ font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--accent); margin-bottom:6px; }}
+      .user-message .chat-role {{ color:#e0f2fe; }}
+      .chat-message p {{ margin:0; }}
+      .chat-message pre {{ white-space:pre-wrap; font-family:inherit; margin:0; }}
+      .chat-sources {{ margin-top:12px; color:var(--muted); font-size:12px; }}
+      .chat-input-form {{ display:flex; gap:9px; padding:14px; border-top:1px solid var(--border); background:var(--panel); }}
+      .chat-input-form input {{ flex:1; }}
+      .chat-input-form select {{ width:auto; }}
+      .chat-input-form label {{ white-space:nowrap; align-self:center; color:var(--muted); font-size:12px; }}
+      @media (max-width:700px) {{ .chat-toolbar, .chat-input-form {{ flex-wrap:wrap; }} .chat-message {{ max-width:100%; }} .chat-input-form input {{ min-width:100%; }} }}
       table {{ width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }}
       th, td {{ border-bottom: 1px solid var(--border); padding: 10px 10px; text-align: left; vertical-align: middle; }}
       th {{ color: var(--muted); text-transform: uppercase; font-size: 11px; letter-spacing: 0.05em; font-weight: 700; }}
@@ -556,6 +661,14 @@ def render_page(
       </div>
 
       <!-- Metric Ribbon -->
+      <nav class="tabs" aria-label="Application sections">
+        <a class="tab-link {'active' if active_tab == 'chat' else ''}" href="/?tab=chat">Chat</a>
+        <a class="tab-link {'active' if active_tab == 'evaluation' else ''}" href="/?tab=evaluation">Evaluation</a>
+        <a class="tab-link {'active' if active_tab == 'trace_review' else ''}" href="/?tab=trace_review">Trace Review</a>
+      </nav>
+      <section class="tab-panel {'active' if active_tab == 'chat' else ''}">{chat_html}</section>
+      <section class="tab-panel {'active' if active_tab == 'trace_review' else ''}"><section class="panel"><h2>Trace Review</h2><p class="small">Enter a trace ID to have the configured LLM review it and append the result to <code>week5/notes.md</code>.</p><form action="/trace-review" method="post" class="search-form"><select name="trace_id"><option value="">Select a complete trace ID</option>{trace_options}</select><button type="submit">Review Trace</button><button type="submit" name="trace_id" value="auto">Review Random Trace</button></form></section></section>
+<section class="tab-panel {'active' if active_tab == 'evaluation' else ''}">
       <div class="metrics-banner">
         <div class="metric-card">
           <div class="metric-title">Baseline Hit@3 (Dense)</div>
@@ -709,6 +822,7 @@ def render_page(
               <th>Action</th>
             </tr>
           </thead>
+      </section>
           <tbody>
             {chunk_rows or "<tr><td colspan='8'>No chunks stored yet.</td></tr>"}
           </tbody>
@@ -724,21 +838,27 @@ def render_page(
 @app.get("/", response_class=HTMLResponse)
 def home(
     question: str = "",
+    tab: str = "chat",
+    top_k: int = 3,
     retrieval_mode: str = "compare",
     debug: bool = False,
 ) -> HTMLResponse:
+    active_tab = tab if tab in {"chat", "evaluation", "trace_review"} else "chat"
+    top_k = max(1, min(top_k, 10))
     comparison = None
     result = None
 
     if question.strip():
         if retrieval_mode == "compare":
-            comparison = service.compare_retrieval(question, top_k=3, debug=debug)
+            comparison = service.compare_retrieval(question, top_k=top_k, debug=debug)
         else:
-            result = service.answer(question, top_k=3, debug=debug, retrieval_mode=retrieval_mode)
+            result = service.answer(question, top_k=top_k, debug=debug, retrieval_mode=retrieval_mode)
 
     return HTMLResponse(
         render_page(
             question=question,
+            active_tab=active_tab,
+            top_k=top_k,
             result=result,
             comparison=comparison,
             retrieval_mode=retrieval_mode,
@@ -746,6 +866,16 @@ def home(
         )
     )
 
+
+@app.post("/trace-review")
+def trace_review(trace_id: str = Form("")) -> JSONResponse:
+    try:
+        service.review_trace(trace_id)
+        return RedirectResponse(url="/?tab=trace_review&reviewed=" + trace_id, status_code=303)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=str(exc))
 
 @app.get("/compare")
 def compare_api(question: str, top_k: int = 3, debug: bool = False) -> JSONResponse:

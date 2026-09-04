@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import json
+
+
+import logging
 import os
 import urllib.error
 import urllib.request
@@ -12,7 +15,7 @@ from uuid import uuid4
 from fastapi import UploadFile
 from pypdf import PdfReader
 
-from rag.config import DEFAULT_CHUNK_OVERLAP, DEFAULT_CHUNK_SIZE, DEFAULT_SCORE_THRESHOLD
+from rag.config import DEFAULT_CHUNK_OVERLAP, DEFAULT_CHUNK_SIZE, DEFAULT_SCORE_THRESHOLD, TRACE_FILE
 from rag.embeddings import EmbeddingBackend
 from rag.env import load_env_file
 from rag.models import ChunkRecord, DocumentRecord
@@ -21,6 +24,24 @@ from rag.retriever import Retriever
 from rag.store import LocalStore
 from rag.structured import RAGAnswer, parse_rag_answer
 from rag.utils import chunk_text, clean_text, ensure_dirs, snippet, slugify_filename
+
+
+TRACE_LOGGER = logging.getLogger("rag.trace")
+
+
+def _write_trace_log(trace: dict[str, Any]) -> None:
+    """Append one self-contained request trace to the application trace log."""
+    TRACE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    handler = logging.FileHandler(TRACE_FILE, encoding="utf-8")
+    handler.setFormatter(logging.Formatter("%(message)s"))
+    TRACE_LOGGER.addHandler(handler)
+    TRACE_LOGGER.setLevel(logging.INFO)
+    TRACE_LOGGER.propagate = False
+    try:
+        TRACE_LOGGER.info(json.dumps(trace, ensure_ascii=False))
+    finally:
+        TRACE_LOGGER.removeHandler(handler)
+        handler.close()
 
 
 class RAGService:
@@ -560,6 +581,53 @@ class RAGService:
         debug: bool = False,
         retrieval_mode: str = "hybrid",
     ) -> dict[str, Any]:
+        import time
+
+        started_at = time.perf_counter()
+        trace_id = uuid4().hex
+
+        def finish(
+            payload: dict[str, Any],
+            retrieval: dict[str, Any] | None = None,
+            raw_output: str | None = None,
+            usage: dict[str, Any] | None = None,
+        ) -> dict[str, Any]:
+            payload["trace_id"] = trace_id
+            hits = (retrieval or {}).get("hits", [])
+            _write_trace_log(
+                {
+                    "trace_id": trace_id,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "question": question,
+                    "prompt_version": "rag-answer-v1",
+                    "retrieval": {
+                        "mode": (retrieval or {}).get("mode"),
+                        "tool_query": (retrieval or {}).get("tool_query"),
+                        "tool_top_k": (retrieval or {}).get("tool_top_k"),
+                        "chunks": [
+                            {
+                                "chunk_id": hit.get("id"),
+                                "text": hit.get("text", ""),
+                                "score": hit.get("score"),
+                                "dense_score": hit.get("dense_score"),
+                                "bm25_score": hit.get("bm25_score"),
+                                "rrf_score": hit.get("rrf_score"),
+                                "source_file": hit.get("source_file") or hit.get("document_filename"),
+                                "sdk_version": hit.get("sdk_version"),
+                                "page_number": hit.get("page_number"),
+                            }
+                            for hit in hits
+                        ],
+                    },
+                    "model": {"name": self._active_model_name(), "temperature": 0.2, "usage": usage},
+                    "raw_output": raw_output,
+                    "answer": payload.get("answer"),
+                    "used_llm": payload.get("used_llm", False),
+                    "latency_ms": round((time.perf_counter() - started_at) * 1000.0, 2),
+                }
+            )
+            return payload
+
         question = question.strip()
         if not question:
             payload = {
@@ -574,7 +642,7 @@ class RAGService:
             }
             if debug:
                 payload["debug"] = {"reason": "blank_question"}
-            return payload
+            return finish(payload)
 
         if len(question) > 2000:
             payload = {
@@ -589,7 +657,7 @@ class RAGService:
             }
             if debug:
                 payload["debug"] = {"reason": "question_too_long", "max_length": 2000}
-            return payload
+            return finish(payload)
 
         retrieval = self._retrieve_hits_for_question(question, top_k=top_k, debug=debug, retrieval_mode=retrieval_mode)
         hits = retrieval["hits"]
@@ -610,7 +678,7 @@ class RAGService:
                     "top_k": top_k,
                     "hit_count": 0,
                 }
-            return payload
+            return finish(payload, retrieval)
 
         effective_threshold = 0.005 if retrieval_mode in ("hybrid", "multiquery") else DEFAULT_SCORE_THRESHOLD
         best_score = hits[0].get("score") if hits[0].get("score") is not None else hits[0].get("rrf_score", 0.0)
@@ -635,7 +703,7 @@ class RAGService:
                     "top_hits": self._debug_hits(hits),
                     "retrieval": retrieval,
                 }
-            return payload
+            return finish(payload, retrieval)
 
         context_blocks = self._build_context_blocks(hits)
         model_name = self._active_model_name()
@@ -668,6 +736,8 @@ class RAGService:
             "used_llm": used_llm,
             "structured_answer": structured_answer.to_dict() if structured_answer is not None else None,
         }
+        raw_output = structured_debug.get("raw_json") if structured_answer is not None else answer_text
+        usage = structured_debug.get("usage")
         if debug:
             if structured_answer is not None and structured_answer.knows_answer:
                 reason = "answer_generated_with_llm"
@@ -695,7 +765,7 @@ class RAGService:
                 "retrieval": retrieval,
                 "structured": structured_debug,
             }
-        return payload
+        return finish(payload, retrieval, raw_output=raw_output, usage=usage)
 
 
     def _retrieve_hits_for_question(
@@ -1062,6 +1132,42 @@ class RAGService:
         except (urllib.error.URLError, TimeoutError, json.JSONDecodeError):
             return None
 
+    def review_trace(self, trace_id: str | None = None) -> dict[str, Any]:
+        """Review one stored trace with the configured LLM and append a notes entry."""
+        from pathlib import Path
+        traces = []
+        if TRACE_FILE.exists():
+            decoder = json.JSONDecoder()
+            traces = []
+            for line in TRACE_FILE.read_text(encoding="utf-8").splitlines():
+                try: traces.append(json.loads(line))
+                except json.JSONDecodeError: continue
+        if trace_id is None or trace_id.strip().lower() in {"", "auto", "random"}:
+            import random
+            trace = random.choice(traces) if traces else None
+            trace_id = trace.get("trace_id") if trace else None
+        else:
+            trace = next((item for item in traces if item.get("trace_id") == trace_id), None)
+        if trace is None:
+            raise ValueError(f"Trace not found: {trace_id}")
+        prompt = ("Review this RAG trace. Decide whether its answer is correct, whether retrieved chunks are relevant, "
+                  "and whether it matches the behavior of earlier traces. Return concise JSON with keys "
+                  "same_as_previous, matching_trace_id, answer_quality, retrieval_quality, category, reason.\n\n" +
+                  json.dumps(trace, ensure_ascii=False))
+        response = self._call_llm([{"role": "system", "content": "You are a precise RAG trace evaluator. Return JSON only."}, {"role": "user", "content": prompt}])
+        if response is None:
+            raise RuntimeError("LLM review request failed")
+        raw = response.get("choices", [{}])[0].get("message", {}).get("content", "")
+        try:
+            review = json.loads(raw)
+        except json.JSONDecodeError:
+            review = {"category": "unparseable_review", "reason": raw}
+        notes_path = Path("week5/notes.md")
+        with notes_path.open("a", encoding="utf-8") as handle:
+            handle.write(f"\n\n### LLM Review — Trace `{trace_id}`\n\n")
+            for key, value in review.items():
+                handle.write(f"- **{key.replace('_', ' ').title()}**: {value}\n")
+        return {"trace_id": trace_id, "review": review, "notes_path": str(notes_path)}
     def documents_payload(self) -> list[dict[str, Any]]:
         return [item.to_dict() for item in self.store.list_documents()]
 
