@@ -9,6 +9,7 @@ UPLOAD_DIR = DATA_DIR / "uploads"
 CHROMA_DIR = DATA_DIR / "chroma"
 DOCS_FILE = DATA_DIR / "documents.json"
 CHUNKS_FILE = DATA_DIR / "chunks.json"
+TRACE_FILE = DATA_DIR / "traces.jsonl"
 
 CHROMA_COLLECTION = "rag_chunks"
 DEFAULT_CHUNK_SIZE = 300
