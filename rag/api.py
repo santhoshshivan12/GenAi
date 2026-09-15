@@ -11,6 +11,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from rag.service import RAGService
 from rag.config import TRACE_FILE
 from rag.utils import snippet
+from week7.chat import run_week7_chat, week7_scenario_options
 
 app = FastAPI(title="RAG Demo - Week 4 Hybrid Evaluation", version="2.0.0")
 service = RAGService()
@@ -291,6 +292,116 @@ def render_chat_view(question: str, result: dict[str, Any] | None, top_k: int) -
       </section>
     """
 
+
+def render_week7_chat_view() -> str:
+    scenarios = week7_scenario_options()
+    options = "".join(
+        f'<option value="{escape(item["scenario_id"])}">{escape(item["scenario_id"])} — {escape(item["level"])}: {escape(item["question"][:120])}</option>'
+        for item in scenarios
+
+    )
+    scenario_json = json.dumps(scenarios, ensure_ascii=False)
+    return f"""
+    <section class="panel week7-chat-panel">
+      <div class="week7-header">
+        <div>
+          <h2>Week 7 Migration Chat</h2>
+          <p class="small">Run the same migration question through the autonomous ReAct agent or the fixed deterministic workflow.</p>
+        </div>
+        <span class="badge badge-cyan">3 strict tools</span>
+      </div>
+      <div class="week7-controls">
+        <label>Scenario
+          <select id="week7-scenario">{options}</select>
+        </label>
+        <label>Architecture
+          <select id="week7-architecture">
+            <option value="react_agent">ReAct Agent</option>
+            <option value="deterministic_workflow">Deterministic Workflow</option>
+          </select>
+        </label>
+        <button id="week7-run" type="button" onclick="runWeek7Migration()">Run migration</button>
+      </div>
+      <div id="week7-scenario-info" class="small week7-info"></div>
+      <div class="week7-metrics" aria-live="polite">
+        <div><span>Pass</span><strong id="week7-pass">—</strong></div>
+        <div><span>Latency</span><strong id="week7-latency">—</strong></div>
+        <div><span>Tool calls</span><strong id="week7-tools">—</strong></div>
+        <div><span>Tokens</span><strong id="week7-tokens">—</strong></div>
+      </div>
+      <div class="week7-grid">
+        <section class="week7-answer-card">
+          <div class="card-heading"><h3>Migration answer</h3><span id="week7-status" class="badge badge-info">Ready</span></div>
+          <pre id="week7-answer">Choose an architecture and run a migration scenario.</pre>
+          <h3>Validation</h3>
+          <pre id="week7-validation">Validation details will appear here.</pre>
+        </section>
+        <section class="week7-log-card">
+          <div class="card-heading"><h3>Execution log</h3><span class="small">reasoning · tools · budgets</span></div>
+          <pre id="week7-log">Tool and reasoning logs will appear here.</pre>
+        </section>
+      </div>
+    </section>
+    <script>
+      const week7Scenarios = {scenario_json};
+      const week7ScenarioSelect = document.getElementById("week7-scenario");
+      const week7ArchitectureSelect = document.getElementById("week7-architecture");
+      const week7Info = document.getElementById("week7-scenario-info");
+
+      function updateWeek7ScenarioInfo() {{
+        const selected = week7Scenarios.find(function(item) {{ return item.scenario_id === week7ScenarioSelect.value; }});
+        if (!selected) return;
+        week7Info.textContent = "Path class: " + selected.dependency_class + " · " + selected.dependency_reason + " · Sources: " + selected.source_files.join(", ");
+      }}
+
+      async function runWeek7Migration() {{
+        const button = document.getElementById("week7-run");
+        const answer = document.getElementById("week7-answer");
+        const log = document.getElementById("week7-log");
+        const validation = document.getElementById("week7-validation");
+        const status = document.getElementById("week7-status");
+        button.disabled = true;
+        status.textContent = "Running";
+        status.className = "badge badge-warning";
+        answer.textContent = "The selected runner is working...";
+        log.textContent = "Starting execution...";
+        try {{
+          const response = await fetch("/week7/chat", {{
+            method: "POST",
+            headers: {{ "Content-Type": "application/json" }},
+            body: JSON.stringify({{ scenario_id: week7ScenarioSelect.value, architecture: week7ArchitectureSelect.value }})
+          }});
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload.detail || "Week 7 execution failed");
+          answer.textContent = payload.answer || "No answer returned.";
+          validation.textContent = JSON.stringify(payload.validation || {{}}, null, 2);
+          document.getElementById("week7-pass").textContent = payload.success ? "PASS" : "FAIL";
+          document.getElementById("week7-latency").textContent = Number(payload.latency_ms || 0).toFixed(3) + " ms";
+          document.getElementById("week7-tools").textContent = String(payload.tool_calls || 0);
+          document.getElementById("week7-tokens").textContent = String((payload.input_tokens || 0) + (payload.output_tokens || 0));
+          const lines = (payload.events || []).map(function(event) {{
+            return "[" + Number(event.timestamp_ms || 0).toFixed(3) + " ms] " + String(event.event_type).toUpperCase() + " " + event.name + " · in=" + event.input_tokens + " out=" + event.output_tokens + (event.detail ? " · " + event.detail : "");
+          }});
+          lines.push("[validation] " + (payload.validation && payload.validation.reason ? payload.validation.reason : "completed"));
+          lines.push("[budget] " + (payload.budget_status || "unknown") + (payload.abort_reason ? " · " + payload.abort_reason : ""));
+          log.textContent = lines.join("\\n");
+          status.textContent = payload.success ? "Completed" : "Failed";
+          status.className = payload.success ? "badge badge-success" : "badge badge-danger";
+        }} catch (error) {{
+          answer.textContent = String(error);
+          status.textContent = "Error";
+          status.className = "badge badge-danger";
+          log.textContent = "[error] " + String(error);
+        }} finally {{
+          button.disabled = false;
+        }}
+      }}
+
+      week7ScenarioSelect.addEventListener("change", updateWeek7ScenarioInfo);
+      updateWeek7ScenarioInfo();
+    </script>
+    """
+
 def render_page(
     result: dict[str, Any] | None = None,
     question: str = "",
@@ -408,7 +519,7 @@ def render_page(
     )
 
     question_value = escape(question)
-
+    week7_html = render_week7_chat_view()
     chat_html = render_chat_view(question, result if active_tab == "chat" else None, top_k)
     return f"""<!doctype html>
 <html lang="en">
@@ -646,6 +757,21 @@ def render_page(
 
       .grid-2 {{ display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 20px; }}
       @media (max-width: 900px) {{ .grid-2 {{ grid-template-columns: 1fr; }} }}
+      .week7-chat-panel {{ max-width: 1180px; margin: 0 auto; }}
+      .week7-header, .week7-controls, .week7-metrics, .card-heading {{ display: flex; gap: 12px; align-items: center; justify-content: space-between; }}
+      .week7-header {{ padding-bottom: 14px; border-bottom: 1px solid var(--border); }}
+      .week7-controls {{ justify-content: flex-start; align-items: end; flex-wrap: wrap; padding: 16px 0; }}
+      .week7-controls label {{ display: flex; flex-direction: column; gap: 6px; min-width: 260px; color: var(--muted); font-size: 12px; font-weight: 700; }}
+      .week7-controls select {{ min-width: 260px; }}
+      .week7-info {{ padding: 10px 0 4px; border-top: 1px solid var(--border); }}
+      .week7-metrics {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 12px 0; }}
+      .week7-metrics > div {{ padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: #070d18; }}
+      .week7-metrics span {{ display: block; color: var(--muted); font-size: 11px; text-transform: uppercase; }}
+      .week7-metrics strong {{ display: block; margin-top: 4px; font-size: 18px; color: var(--accent); }}
+      .week7-grid {{ display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; margin-top: 14px; }}
+      .week7-answer-card, .week7-log-card {{ min-width: 0; padding: 16px; border: 1px solid var(--border); border-radius: 12px; background: #0d1422; }}
+      .week7-answer-card pre, .week7-log-card pre {{ min-height: 280px; max-height: 560px; overflow: auto; white-space: pre-wrap; background: #070d18; border: 1px solid var(--border); border-radius: 8px; padding: 12px; }}
+      @media (max-width: 800px) {{ .week7-metrics, .week7-grid {{ grid-template-columns: 1fr; }} .week7-header {{ align-items: flex-start; flex-direction: column; }} }}
       .small {{ font-size: 12px; color: var(--muted); }}
       code {{ font-family: monospace; background: #070d18; padding: 2px 5px; border-radius: 4px; color: #38bdf8; }}
       a {{ color: var(--accent); text-decoration: none; }}
@@ -665,8 +791,10 @@ def render_page(
         <a class="tab-link {'active' if active_tab == 'chat' else ''}" href="/?tab=chat">Chat</a>
         <a class="tab-link {'active' if active_tab == 'evaluation' else ''}" href="/?tab=evaluation">Evaluation</a>
         <a class="tab-link {'active' if active_tab == 'trace_review' else ''}" href="/?tab=trace_review">Trace Review</a>
+        <a class="tab-link {'active' if active_tab == 'week7' else ''}" href="/?tab=week7">Week 7 Agent Race</a>
       </nav>
       <section class="tab-panel {'active' if active_tab == 'chat' else ''}">{chat_html}</section>
+      <section class="tab-panel {'active' if active_tab == 'week7' else ''}">{week7_html}</section>
       <section class="tab-panel {'active' if active_tab == 'trace_review' else ''}"><section class="panel"><h2>Trace Review</h2><p class="small">Enter a trace ID to have the OpenRouter LLM review it and append the result to <code>week5/notes.md</code>.</p><form action="/trace-review" method="post" class="search-form"><select name="trace_id"><option value="">Select a complete trace ID</option>{trace_options}</select><button type="submit">Review Trace</button><button type="submit" name="trace_id" value="auto">Review Random Trace</button></form></section></section>
 <section class="tab-panel {'active' if active_tab == 'evaluation' else ''}">
       <div class="metrics-banner">
@@ -843,7 +971,7 @@ def home(
     retrieval_mode: str = "compare",
     debug: bool = False,
 ) -> HTMLResponse:
-    active_tab = tab if tab in {"chat", "evaluation", "trace_review"} else "chat"
+    active_tab = tab if tab in {"chat", "evaluation", "trace_review", "week7"} else "chat"
     top_k = max(1, min(top_k, 10))
     comparison = None
     result = None
@@ -883,6 +1011,27 @@ def compare_api(question: str, top_k: int = 3, debug: bool = False) -> JSONRespo
         raise HTTPException(status_code=400, detail="question parameter is required")
     return JSONResponse(service.compare_retrieval(question, top_k=top_k, debug=debug))
 
+
+@app.get("/week7/scenarios")
+def week7_scenarios() -> JSONResponse:
+    try:
+        return JSONResponse({"scenarios": week7_scenario_options()})
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Week 7 runtime unavailable: {exc}") from exc
+
+
+@app.post("/week7/chat")
+def week7_chat(payload: dict[str, Any] = Body(...)) -> JSONResponse:
+    scenario_id = str(payload.get("scenario_id", "")).strip()
+    architecture = str(payload.get("architecture", "")).strip()
+    if not scenario_id or architecture not in {"react_agent", "deterministic_workflow"}:
+        raise HTTPException(status_code=400, detail="scenario_id and valid architecture are required")
+    try:
+        return JSONResponse(run_week7_chat(scenario_id, architecture))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Week 7 execution failed: {exc}") from exc
 
 @app.post("/upload")
 def upload(
