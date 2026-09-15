@@ -1,0 +1,1177 @@
+{
+  "metadata": {
+    "week": 7,
+    "run_timestamp_utc": "2026-09-15T13:29:53.215507+00:00",
+    "input_root": "D:\\Santhoshshivan\\Python\\PythonProject\\input_files 1\\input_files",
+    "golden_sets": [
+      "D:\\Santhoshshivan\\Python\\PythonProject\\input_files 1\\input_files\\golden_sets\\gs_medium.json",
+      "D:\\Santhoshshivan\\Python\\PythonProject\\input_files 1\\input_files\\golden_sets\\gs_hard.json"
+    ],
+    "documentation_directory": "D:\\Santhoshshivan\\Python\\PythonProject\\input_files 1\\input_files\\developer_documentations",
+    "scenario_count": 10,
+    "provider": "offline deterministic benchmark",
+    "model_name": "offline-evidence-synthesizer-v1",
+    "tool_count": 3,
+    "tool_names": [
+      "search_documentation",
+      "inspect_source",
+      "check_deprecation"
+    ],
+    "architecture_selection": "react_agent"
+  },
+  "limits": {
+    "max_iterations": 8,
+    "max_tool_calls": 16,
+    "max_input_tokens": 12000,
+    "max_output_tokens": 8000,
+    "max_cost_usd": 0.25,
+    "max_latency_seconds": 30.0,
+    "p50_target_seconds": 2.0,
+    "p99_target_seconds": 5.0
+  },
+  "tool_definitions": [
+    {
+      "name": "search_documentation",
+      "description": "Search the supplied PDF pages for migration evidence.",
+      "parameters": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "query"
+        ],
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Migration question or focused search query"
+          },
+          "source_files": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "page_numbers": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "top_k": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10
+          }
+        }
+      }
+    },
+    {
+      "name": "inspect_source",
+      "description": "Read one source PDF page in full.",
+      "parameters": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source_file",
+          "page_number"
+        ],
+        "properties": {
+          "source_file": {
+            "type": "string",
+            "description": "Input PDF filename"
+          },
+          "page_number": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    },
+    {
+      "name": "check_deprecation",
+      "description": "Check whether one endpoint parameter is deprecated for a selected API version.",
+      "parameters": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "api_version",
+          "endpoint",
+          "parameter"
+        ],
+        "properties": {
+          "api_version": {
+            "type": "string",
+            "enum": [
+              "2022-11-28",
+              "2025-06-01"
+            ],
+            "description": "GitHub REST API version to inspect"
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "Endpoint whose parameter is being checked"
+          },
+          "parameter": {
+            "type": "string",
+            "description": "One endpoint parameter to check"
+          }
+        }
+      }
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "medium-01",
+      "level": "Medium",
+      "question": "In GitHub API version 2025-06-01, what parameter replaces the deprecated single assignee field when creating an issue?",
+      "metadata": {
+        "target_file": "github_combined_reference.pdf",
+        "page_number": 5,
+        "api_version": "2025-06-01",
+        "tool_context": "GitHub REST API",
+        "endpoint": "POST /repos/{owner}/{repo}/issues"
+      },
+      "expected_chunk_id": "github_combined_p5#create_issue_v2025",
+      "source_files": [
+        "github_combined_reference.pdf"
+      ],
+      "page_numbers": [
+        5
+      ],
+      "dependency_class": "deprecation_dependent_assignee",
+      "dependency_reason": "If assignee is deprecated, the replacement assignees field must be looked up.",
+      "deprecation_check": {
+        "api_version": "2025-06-01",
+        "endpoint": "POST /repos/{owner}/{repo}/issues",
+        "parameter": "assignee"
+      }
+    },
+    {
+      "scenario_id": "medium-04",
+      "level": "Medium",
+      "question": "What is the default behavior of has_issues when creating a private repository in GitHub API version 2025-06-01 vs 2022-11-28?",
+      "metadata": {
+        "target_file": "github_combined_reference.pdf",
+        "page_number": 9,
+        "api_version": "2025-06-01",
+        "tool_context": "GitHub REST API",
+        "endpoint": "POST /user/repos"
+      },
+      "expected_chunk_id": "github_combined_p9#create_repo_v2025",
+      "source_files": [
+        "github_combined_reference.pdf"
+      ],
+      "page_numbers": [
+        9
+      ],
+      "dependency_class": "deprecation_dependent_visibility_default",
+      "dependency_reason": "The next lookup depends on whether the has_issues parameter is deprecated or only visibility-dependent.",
+      "deprecation_check": {
+        "api_version": "2025-06-01",
+        "endpoint": "POST /user/repos",
+        "parameter": "has_issues"
+      }
+    },
+    {
+      "scenario_id": "medium-07",
+      "level": "Medium",
+      "question": "What new visibility enum values are supported when creating a repository in GitHub API version 2025-06-01?",
+      "metadata": {
+        "target_file": "github_combined_reference.pdf",
+        "page_number": 9,
+        "api_version": "2025-06-01",
+        "tool_context": "GitHub REST API",
+        "endpoint": "POST /user/repos"
+      },
+      "expected_chunk_id": "github_combined_p9#create_repo_v2025",
+      "source_files": [
+        "github_combined_reference.pdf"
+      ],
+      "page_numbers": [
+        9
+      ],
+      "dependency_class": "deprecation_dependent_private_visibility",
+      "dependency_reason": "If private is deprecated, the replacement visibility enum must be looked up.",
+      "deprecation_check": {
+        "api_version": "2025-06-01",
+        "endpoint": "POST /user/repos",
+        "parameter": "private"
+      }
+    },
+    {
+      "scenario_id": "hard-01",
+      "level": "Hard",
+      "question": "Compare how the context parameter format changed between GitHub API version 2022-11-28 and 2025-06-01 for rendering Markdown.",
+      "metadata": {
+        "target_file": "github_combined_reference.pdf",
+        "page_number": 3,
+        "api_versions": [
+          "2022-11-28",
+          "2025-06-01"
+        ],
+        "tool_context": "GitHub REST API Migration",
+        "endpoint": "POST /markdown"
+      },
+      "expected_chunk_id": "github_combined_p3#markdown_diff",
+      "source_files": [
+        "github_combined_reference.pdf"
+      ],
+      "page_numbers": [
+        3
+      ],
+      "dependency_class": "fixed_documentation_path",
+      "dependency_reason": "Both version pages are known from the scenario metadata.",
+      "deprecation_check": null
+    },
+    {
+      "scenario_id": "hard-03",
+      "level": "Hard",
+      "question": "What top-level configuration key was introduced in Swagger Codegen v3 config files to nest generator-specific options that did not exist in v2?",
+      "metadata": {
+        "target_file": [
+          "swagger_v3_reference.pdf",
+          "swagger_v2_reference.pdf"
+        ],
+        "page_number": [
+          6,
+          5
+        ],
+        "tool_versions": [
+          "2.x",
+          "3.x"
+        ],
+        "tool_context": "Config File Migration",
+        "feature": "additionalProperties Nesting"
+      },
+      "expected_chunk_id": "swagger_v3_p6#config_diff",
+      "source_files": [
+        "swagger_v3_reference.pdf",
+        "swagger_v2_reference.pdf"
+      ],
+      "page_numbers": [
+        6,
+        5
+      ],
+      "dependency_class": "fixed_documentation_path",
+      "dependency_reason": "Both config pages are known from the scenario metadata.",
+      "deprecation_check": null
+    },
+    {
+      "scenario_id": "hard-05",
+      "level": "Hard",
+      "question": "Migrate a Java generator configuration from Swagger Codegen 2.x to 3.x that uses oneOf schemas and the webclient library. What config keys change?",
+      "metadata": {
+        "target_file": [
+          "swagger_v3_reference.pdf",
+          "swagger_v2_reference.pdf"
+        ],
+        "page_number": [
+          3,
+          2
+        ],
+        "tool_versions": [
+          "2.x",
+          "3.x"
+        ],
+        "tool_context": "Java Generator Migration",
+        "language": "Java"
+      },
+      "expected_chunk_id": "swagger_v3_p3#java_config_diff",
+      "source_files": [
+        "swagger_v3_reference.pdf",
+        "swagger_v2_reference.pdf"
+      ],
+      "page_numbers": [
+        3,
+        2
+      ],
+      "dependency_class": "fixed_documentation_path",
+      "dependency_reason": "Both Java generator pages are known from the scenario metadata.",
+      "deprecation_check": null
+    },
+    {
+      "scenario_id": "hard-06",
+      "level": "Hard",
+      "question": "How does the make_latest parameter in GitHub API version 2025-06-01 release creation replace the undocumented heuristic used in 2022-11-28?",
+      "metadata": {
+        "target_file": "github_combined_reference.pdf",
+        "page_number": 13,
+        "api_versions": [
+          "2022-11-28",
+          "2025-06-01"
+        ],
+        "tool_context": "GitHub REST API Migration",
+        "endpoint": "POST /repos/{owner}/{repo}/releases"
+      },
+      "expected_chunk_id": "github_combined_p13#release_diff",
+      "source_files": [
+        "github_combined_reference.pdf"
+      ],
+      "page_numbers": [
+        13
+      ],
+      "dependency_class": "fixed_documentation_path",
+      "dependency_reason": "The release comparison page is known from the scenario metadata.",
+      "deprecation_check": null
+    },
+    {
+      "scenario_id": "hard-08",
+      "level": "Hard",
+      "question": "How did draft pull requests interact with auto-merge settings in GitHub API version 2022-11-28 versus 2025-06-01?",
+      "metadata": {
+        "target_file": "github_combined_reference.pdf",
+        "page_number": 7,
+        "api_versions": [
+          "2022-11-28",
+          "2025-06-01"
+        ],
+        "tool_context": "GitHub REST API Feature Interaction",
+        "feature": "Draft PR Auto-Merge"
+      },
+      "expected_chunk_id": "github_combined_p7#pull_request_diff",
+      "source_files": [
+        "github_combined_reference.pdf"
+      ],
+      "page_numbers": [
+        7
+      ],
+      "dependency_class": "fixed_documentation_path",
+      "dependency_reason": "The pull-request comparison page is known from the scenario metadata.",
+      "deprecation_check": null
+    },
+    {
+      "scenario_id": "hard-09",
+      "level": "Hard",
+      "question": "Compare how Markdown table rendering behavior changed between GitHub API version 2022-11-28 and 2025-06-01.",
+      "metadata": {
+        "target_file": "github_combined_reference.pdf",
+        "page_number": 3,
+        "api_versions": [
+          "2022-11-28",
+          "2025-06-01"
+        ],
+        "tool_context": "GitHub REST API Feature Comparison",
+        "feature": "Table Wrapping"
+      },
+      "expected_chunk_id": "github_combined_p3#markdown_diff",
+      "source_files": [
+        "github_combined_reference.pdf"
+      ],
+      "page_numbers": [
+        3
+      ],
+      "dependency_class": "fixed_documentation_path",
+      "dependency_reason": "The Markdown comparison page is known from the scenario metadata.",
+      "deprecation_check": null
+    },
+    {
+      "scenario_id": "hard-10",
+      "level": "Hard",
+      "question": "Migrate a Python client configuration file from Swagger Codegen 2.x to 3.x to support asynchronous execution and YAML format. What steps are required?",
+      "metadata": {
+        "target_file": [
+          "swagger_v3_reference.pdf",
+          "swagger_v2_reference.pdf"
+        ],
+        "page_number": [
+          4,
+          3
+        ],
+        "tool_versions": [
+          "2.x",
+          "3.x"
+        ],
+        "tool_context": "Python Generator Migration",
+        "language": "Python"
+      },
+      "expected_chunk_id": "swagger_v3_p4#python_config_diff; swagger_v3_p6#config_diff",
+      "source_files": [
+        "swagger_v3_reference.pdf",
+        "swagger_v2_reference.pdf"
+      ],
+      "page_numbers": [
+        4,
+        3
+      ],
+      "dependency_class": "fixed_documentation_path",
+      "dependency_reason": "Both Python generator pages are known from the scenario metadata.",
+      "deprecation_check": null
+    }
+  ],
+  "architectures": {
+    "react_agent": {
+      "metrics": {
+        "total_cases": 10,
+        "successful_cases": 10,
+        "success_rate_pct": 100.0,
+        "p50_latency_ms": 0.334,
+        "p99_latency_ms": 1.496,
+        "p50_latency_target_ms": 2000.0,
+        "p99_latency_target_ms": 5000.0,
+        "latency_targets_met": true,
+        "total_input_tokens": 1193,
+        "total_output_tokens": 13594,
+        "total_tokens": 14787,
+        "average_tokens_per_case": 1478.7,
+        "total_estimated_cost_usd": 0.00833535,
+        "estimated_cost_per_question_usd": 0.00083354,
+        "total_actual_cost_usd": 0.0,
+        "cost_per_question_usd": 0.0,
+        "cost_per_success_usd": 0.0,
+        "average_tool_calls": 3.4,
+        "average_iterations": 1.1,
+        "aborted_cases": 0
+      },
+      "cases": [
+        {
+          "architecture": "react_agent",
+          "scenario_id": "medium-01",
+          "success": true,
+          "answer": "Migration request: In GitHub API version 2025-06-01, what parameter replaces the deprecated single assignee field when creating an issue?\n\nApply the migration by identifying the version-specific behavior, updating the client/configuration to the newer form, and verifying the generated request or client output against the source evidence.\n\nPath decision: The deprecation check found assignee deprecated in 2025-06-01; follow-up lookup uses replacement assignees.\n\nEvidence:\n[github_combined_reference.pdf p.5] Create an issue POST /repos/{owner}/{repo}/issues API version 2025-06-01 Creates an issue on the specified repository . Any user with pull access can create one. Starting in this version, assignee is deprecated in favor of assignees (array), and a new optional type field lets you set the issue type at creation time instead of via a separate call. Path parameters Name T ype Description owner string The account owner of the repository . repo string The name of the repository . Body parameters Name T ype Required Default Description title string or integer Y es — The title of the issue. body string No null The contents of the issue. assignees array of strings No [] Logins for the users assigned to this issue. Replaces the deprecated assi gnee field. labels array of strings No [] Labels to associate with this issue. type string No null The name of the issue type to set on creation. curl -L -X POST \\ -H \"X-GitHub-Api-Version: 2025-06-01\" \\ https://api.github.com/repos/octocat/Hello-World/issues \\ -d '{\"title\":\"Found a bug\",\"assignees\":[\"octocat\"],\"type\":\"Bug\"}' Previous version (2022-11-28) The prior version of this endpoint only accepted a single assignee (string) rather than an as sig",
+          "validation": {
+            "valid": true,
+            "coverage": 0.9,
+            "matched_concepts": [
+              "array",
+              "assignee",
+              "assignees",
+              "deprecated",
+              "favor",
+              "field",
+              "logins",
+              "single",
+              "strings"
+            ],
+            "expected_concept_count": 10,
+            "valid_citation_count": 1,
+            "required_source_count": 1,
+            "reason": "evidence and migration steps satisfy the validation threshold"
+          },
+          "iterations": 1,
+          "tool_calls": 4,
+          "input_tokens": 157,
+          "output_tokens": 1582,
+          "estimated_cost_usd": 0.00097275,
+          "actual_cost_usd": 0.0,
+          "latency_ms": 1.5836,
+          "aborted": false,
+          "abort_reason": null,
+          "events": [
+            {
+              "event_type": "reasoning",
+              "name": "agent_reasoning",
+              "timestamp_ms": 0.0183,
+              "input_tokens": 0,
+              "output_tokens": 14,
+              "detail": "Thought 1: search, inspect, then choose the next tool."
+            },
+            {
+              "event_type": "tool_call",
+              "name": "search_documentation",
+              "timestamp_ms": 0.9706,
+              "input_tokens": 54,
+              "output_tokens": 404,
+              "detail": "duration_ms=0.917"
+            },
+            {
+              "event_type": "tool_call",
+              "name": "inspect_source",
+              "timestamp_ms": 1.0399,
+              "input_tokens": 17,
+              "output_tokens": 397,
+              "detail": "duration_ms=0.061"
+            },
+            {
+              "event_type": "tool_call",
+              "name": "check_deprecation",
+              "timestamp_ms": 1.2583,
+              "input_tokens": 26,
+              "output_tokens": 363,
+              "detail": "duration_ms=0.204"
+            },
+            {
+              "event_type": "tool_call",
+              "name": "search_documentation",
+              "timestamp_ms": 1.3239,
+              "input_tokens": 60,
+              "output_tokens": 404,
+              "detail": "duration_ms=0.063"
+            }
+          ]
+        },
+        {
+          "architecture": "react_agent",
+          "scenario_id": "medium-04",
+          "success": true,
+          "answer": "Migration request: What is the default behavior of has_issues when creating a private repository in GitHub API version 2025-06-01 vs 2022-11-28?\n\nApply the migration by identifying the version-specific behavior, updating the client/configuration to the newer form, and verifying the generated request or client output against the source evidence.\n\nPath decision: The deprecation check found no replacement for has_issues; follow-up lookup uses the version-specific behavior.\n\nEvidence:\n[github_combined_reference.pdf p.9] Create a repository for the authenticated user POST /user/repos — API version 2025-06-01 What changed As of this version, has_issues defaults to true only for public repositories; private repositories now default has_issues to false unless explicitly set. A new visibility enum field supersedes the boolean private for organizations offering internal repositories, though private continues to work for personal accounts. Parameters • name (string, required) — Repository name. • description (string, optional) — Short repository description. • visibility (enum, optional) — One of public, private, internal. Default: public. • private (boolean, optional, deprecated in favor of visibility) — Default: false. • has_issues (boolean, optional) — Default depends on visibility: true for public, false for private/internal. • auto_init (boolean, optional) — Default: false. Creates an initial commit with an empty README when true. Request curl -X POST -H \"X-GitHub-Api-Version: 2025-06-01\" \\ https://api.github.com/user/repos \\ -d '{\"name\":\"Hello-World\",\"visibility\":\"internal\",\"auto_init\":true}' Response Returns 201 Created with the full repository object. Previous version (2022-11-28) The prior versi",
+          "validation": {
+            "valid": true,
+            "coverage": 0.6364,
+            "matched_concepts": [
+              "defaults",
+              "has_issues",
+              "private",
+              "public",
+              "repositories",
+              "repository",
+              "visibility"
+            ],
+            "expected_concept_count": 11,
+            "valid_citation_count": 1,
+            "required_source_count": 1,
+            "reason": "evidence and migration steps satisfy the validation threshold"
+          },
+          "iterations": 1,
+          "tool_calls": 4,
+          "input_tokens": 157,
+          "output_tokens": 1610,
+          "estimated_cost_usd": 0.0009895499999999998,
+          "actual_cost_usd": 0.0,
+          "latency_ms": 0.4209,
+          "aborted": false,
+          "abort_reason": null,
+          "events": [
+            {
+              "event_type": "reasoning",
+              "name": "agent_reasoning",
+              "timestamp_ms": 0.0063999999999999994,
+              "input_tokens": 0,
+              "output_tokens": 14,
+              "detail": "Thought 1: search, inspect, then choose the next tool."
+            },
+            {
+              "event_type": "tool_call",
+              "name": "search_documentation",
+              "timestamp_ms": 0.0708,
+              "input_tokens": 56,
+              "output_tokens": 414,
+              "detail": "duration_ms=0.063"
+            },
+            {
+              "event_type": "tool_call",
+              "name": "inspect_source",
+              "timestamp_ms": 0.0975,
+              "input_tokens": 17,
+              "output_tokens": 409,
+              "detail": "duration_ms=0.024"
+            },
+            {
+              "event_type": "tool_call",
+              "name": "check_deprecation",
+              "timestamp_ms": 0.2552,
+              "input_tokens": 22,
+              "output_tokens": 357,
+              "detail": "duration_ms=0.148"
+            },
+            {
+              "event_type": "tool_call",
+              "name": "search_documentation",
+              "timestamp_ms": 0.3082,
+              "input_tokens": 62,
+              "output_tokens": 416,
+              "detail": "duration_ms=0.051"
+            }
+          ]
+        },
+        {
+          "architecture": "react_agent",
+          "scenario_id": "medium-07",
+          "success": true,
+          "answer": "Migration request: What new visibility enum values are supported when creating a repository in GitHub API version 2025-06-01?\n\nApply the migration by identifying the version-specific behavior, updating the client/configuration to the newer form, and verifying the generated request or client output against the source evidence.\n\nPath decision: The deprecation check found private deprecated in 2025-06-01; follow-up lookup uses replacement visibility.\n\nEvidence:\n[github_combined_reference.pdf p.9] Create a repository for the authenticated user POST /user/repos — API version 2025-06-01 What changed As of this version, has_issues defaults to true only for public repositories; private repositories now default has_issues to false unless explicitly set. A new visibility enum field supersedes the boolean private for organizations offering internal repositories, though private continues to work for personal accounts. Parameters • name (string, required) — Repository name. • description (string, optional) — Short repository description. • visibility (enum, optional) — One of public, private, internal. Default: public. • private (boolean, optional, deprecated in favor of visibility) — Default: false. • has_issues (boolean, optional) — Default depends on visibility: true for public, false for private/internal. • auto_init (boolean, optional) — Default: false. Creates an initial commit with an empty README when true. Request curl -X POST -H \"X-GitHub-Api-Version: 2025-06-01\" \\ https://api.github.com/user/repos \\ -d '{\"name\":\"Hello-World\",\"visibility\":\"internal\",\"auto_init\":true}' Response Returns 201 Created with the full repository object. Previous version (2022-11-28) The prior versi",
+          "validation": {
+            "valid": true,
+            "coverage": 0.8333,
+            "matched_concepts": [
+              "enum",
+              "internal",
+              "private",
+              "public",
+              "visibility"
+            ],
+            "expected_concept_count": 6,
+            "valid_citation_count": 1,
+            "required_source_count": 1,
+            "reason": "evidence and migration steps satisfy the validation threshold"
+          },
+          "iterations": 1,
+          "tool_calls": 4,
+          "input_tokens": 147,
+          "output_tokens": 1613,
+          "estimated_cost_usd": 0.00098985,
+          "actual_cost_usd": 0.0,
+          "latency_ms": 0.3934,
+          "aborted": false,
+          "abort_reason": null,
+          "events": [
+            {
+              "event_type": "reasoning",
+              "name": "agent_reasoning",
+              "timestamp_ms": 0.0028,
+              "input_tokens": 0,
+              "output_tokens": 14,
+              "detail": "Thought 1: search, inspect, then choose the next tool."
+            },
+            {
+              "event_type": "tool_call",
+              "name": "search_documentation",
+              "timestamp_ms": 0.0606,
+              "input_tokens": 51,
+              "output_tokens": 416,
+              "detail": "duration_ms=0.057"
+            },
+            {
+              "event_type": "tool_call",
+              "name": "inspect_source",
+              "timestamp_ms": 0.085,
+              "input_tokens": 17,
+              "output_tokens": 409,
+              "detail": "duration_ms=0.022"
+            },
+            {
+              "event_type": "tool_call",
+              "name": "check_deprecation",
+              "timestamp_ms": 0.2428,
+              "input_tokens": 22,
+              "output_tokens": 358,
+              "detail": "duration_ms=0.149"
+            },
+            {
+              "event_type": "tool_call",
+              "name": "search_documentation",
+              "timestamp_ms": 0.2963,
+              "input_tokens": 57,
+              "output_tokens": 416,
+              "detail": "duration_ms=0.052"
+            }
+          ]
+        },
+        {
+          "architecture": "react_agent",
+          "scenario_id": "hard-01",
+          "success": true,
+          "answer": "Migration request: Compare how the context parameter format changed between GitHub API version 2022-11-28 and 2025-06-01 for rendering Markdown.\n\nApply the migration by identifying the version-specific behavior, updating the client/configuration to the newer form, and verifying the generated request or client output against the source evidence.\n\nPath decision: No deprecation branch was required; use the versioned evidence directly.\n\nEvidence:\n[github_combined_reference.pdf p.3] Render a Markdown document Applies to API version 2025-06-01 and later. Renders a Markdown document server-side, returning either an HTML fragment or raw text depending on the requested mode. T wo changes from earlier API versions: the context field now accepts an owner/repo pair as a structured object rather than a plain string, and a new wrap_tables flag controls whether wide tables are wrapped for narrow viewports. curl -L \\ -X POST \\ -H \"Accept: application/vnd.github+json\" \\ -H \"Authorization: Bearer <YOUR-TOKEN>\" \\ -H \"X-GitHub-Api-Version: 2025-06-01\" \\ https://api.github.com/markdown \\ -d '{\"text\":\"Hello **world**\",\"wrap_tables\":true}' Parameters accepted in the request body: • text (string, required) — The Markdown text to render. • mode (string, optional, default markdown) — One of markdown or gfm. • context (object, optional) — { ”owner”: ”...”, ”repo”: ”...” }. Used for gfm-mode reference linking. • wrap_tables (boolean, optional, default false) — When true, wide tables render with hori- zontal scroll wrappers instead of overflowing. Response body is an HTML string (or raw text, in raw mode). Content must be 400 KB or less. Previous version (2022-11-28) The prior versio",
+          "validation": {
+            "valid": true,
+            "coverage": 0.9,
+            "matched_concepts": [
+              "accepted",
+              "accepts",
+              "context",
+              "owner",
+              "owner/repo",
+              "pair",
+              "plain",
+              "repo",
+              "structured"
+            ],
+            "expected_concept_count": 10,
+            "valid_citation_count": 1,
+            "required_source_count": 1,
+            "reason": "evidence and migration steps satisfy the validation threshold"
+          },
+          "iterations": 1,
+          "tool_calls": 2,
+          "input_tokens": 73,
+          "output_tokens": 853,
+          "estimated_cost_usd": 0.00052275,
+          "actual_cost_usd": 0.0,
+          "latency_ms": 0.1963,
+          "aborted": false,
+          "abort_reason": null,
+          "events": [
+            {
+              "event_type": "reasoning",
+              "name": "agent_reasoning",
+              "timestamp_ms": 0.0028,
+              "input_tokens": 0,
+              "output_tokens": 14,
+              "detail": "Thought 1: search, inspect, then choose the next tool."
+            },
+            {
+              "event_type": "tool_call",
+              "name": "search_documentation",
+              "timestamp_ms": 0.0606,
+              "input_tokens": 56,
+              "output_tokens": 423,
+              "detail": "duration_ms=0.057"
+            },
+            {
+              "event_type": "tool_call",
+              "name": "inspect_source",
+              "timestamp_ms": 0.0835,
+              "input_tokens": 17,
+              "output_tokens": 416,
+              "detail": "duration_ms=0.021"
+            }
+          ]
+        },
+        {
+          "architecture": "react_agent",
+          "scenario_id": "hard-03",
+          "success": true,
+          "answer": "Migration request: What top-level configuration key was introduced in Swagger Codegen v3 config files to nest generator-specific options that did not exist in v2?\n\nApply the migration by identifying the version-specific behavior, updating the client/configuration to the newer form, and verifying the generated request or client output against the source evidence.\n\nPath decision: No deprecation branch was required; use the versioned evidence directly.\n\nEvidence:\n[swagger_v3_reference.pdf p.6] Config file usage (v3) How it works Same-cconfig.jsonmechanismasv2. v3additionallyallowsa.yamlconfigfile(auto-detected byextension)asanalternativetoJSON,andsupportsatop-leveladditionalPropertieskeythat nestslanguage-specificvaluesinsteadoflistingthemflat. Supported keys Key Type v2equivalent Notes modelPackage string same Unchanged. apiPackage string same Unchanged. invokerPackage string same Unchanged. groupId/artifactId/ artifactVersion string same Unchanged, Maven-target languagesonly. additionalProperties object (new) Nests generator-specific options;ifpresent, flattop-levelkeysof thesamenameare ignoredinfavorof thenestedvalue. modelPackage: com.example.model additionalProperties: library: asyncio java -jar swagger-codegen-cli.jar generate -i spec.yaml -l python -c config.yaml Compared to v2 Thev2configfilemechanismacceptedJSONonly—YAMLconfigfileswerenotrecognized,and passingonewouldfailwithaparseerrorratherthanbeingauto-detected. Therewasalsono additionalPropertiesnesting;everyoptionhadtobespecifiedasaflattop-levelkey,exactly asshowninthev2exampleabove,whichbecameunwieldyonceageneratorneededmany language-specificoverridesinasingleconfigfile. 6\n[swagger_v3_reference.pdf p.5] The .swagger-codegen-ignore file (v3) Behavesasin2.x,withoneaddition:v3alsohonorsa.openapi-generator-ignore-stylenegation pattern (!pattern) to re-include a file that a broader glob above it excluded — this negation supportdidnotexistin2.x. # Ignore everything in docs/ docs/**/* # ...except this one file !docs/keep-this.md Asinv2, placethefileintheoutputdirectoryrootbeforerunninggenerate. Rulesareread onceperinvocation. Compared to v2 SwaggerCodegen2.x’s.swagger-codegen-ignorefilesupportedonlyplainglob-styleexclude patterns, matching .gitignore syntax exactly. There was no way to re-include a file once a broaderpatternaboveithadexcludedit—ifyouwrotedocs/**/*toskipafolderinv2,every file underneath was skipped with no override mechanism, which was a frequently reported limitation for users who wanted to exclude most of a generated folder but keep one hand- editedfile. 5\n[swagger_v2_reference.pdf p.5] Using a JSON config file (-c) Anycodegenoptionthathasacorrespondingcommand-lineflagcanalsobesetviaaJSONfile suppliedwith-cpath/to/config.json,andthisisgenerallytherecommendedapproachonceyou havemorethantwoorthreeoptionstoset,sincecommandlineswithmany-Dflagsbecome difficulttoread,difficulttokeepconsistentacrossateam’sCIpipelinedefinitions,anddifficult to diff meaningfully in a pull request compared to a small, self-contained JSON file that can bereviewedonitsownandreusedverbatimacrossmultipleinvocationsofthegeneratorfor differentlanguagesiftheoptionnameshappentobesharedacrossthoselanguagegenerators, whichmanyofthecommononesare. Key Type Description modelPackage string Packageforgenerated models. apiPackage string PackageforgeneratedAPI classes. invokerPackage string Rootpackageforthe generatedclient. groupId string MavengroupId,for languagesthatproducea Mavenproject. artifactId string MavenartifactId. artifactVersion string Mavenartifactversion. java -jar swagger-codegen-cli.jar generate -i spec.json -l java -c config.json 5",
+          "validation": {
+            "valid": true,
+            "coverage": 0.5294,
+            "matched_concepts": [
+              "additionalproperties",
+              "codegen",
+              "generator-specific",
+              "introduced",
+              "keys",
+              "nest",
+              "same",
+              "swagger",
+              "top-level"
+            ],
+            "expected_concept_count": 17,
+            "valid_citation_count": 3,
+            "required_source_count": 2,
+            "reason": "evidence and migration steps satisfy the validation threshold"
+          },
+          "iterations": 1,
+          "tool_calls": 4,
+          "input_tokens": 115,
+          "output_tokens": 1756,
+          "estimated_cost_usd": 0.0010708499999999997,
+          "actual_cost_usd": 0.0,
+          "latency_ms": 0.35819999999999996,
+          "aborted": false,
+          "abort_reason": null,
+          "events": [
+            {
+              "event_type": "reasoning",
+              "name": "agent_reasoning",
+              "timestamp_ms": 0.0033,
+              "input_tokens": 0,
+              "output_tokens": 14,
+              "detail": "Thought 1: search, inspect, then choose the next tool."
+            },
+            {
+              "event_type": "tool_call",
+              "name": "search_documentation",
+              "timestamp_ms": 0.1402,
+              "input_tokens": 67,
+              "output_tokens": 874,
+              "detail": "duration_ms=0.136"
+            },
+            {
+              "event_type": "tool_call",
+              "name": "inspect_source",
+              "timestamp_ms": 0.1658,
+              "input_tokens": 16,
+              "output_tokens": 324,
+              "detail": "duration_ms=0.023"
+            },
+            {
+              "event_type": "tool_call",
+              "name": "inspect_source",
+              "timestamp_ms": 0.1845,
+              "input_tokens": 16,
+              "output_tokens": 252,
+              "detail": "duration_ms=0.016"
+            },
+            {
+              "event_type": "tool_call",
+              "name": "inspect_source",
+              "timestamp_ms": 0.202,
+              "input_tokens": 16,
+              "output_tokens": 292,
+              "detail": "duration_ms=0.015"
+            }
+          ]
+        },
+        {
+          "architecture": "react_agent",
+          "scenario_id": "hard-05",
+          "success": true,
+          "answer": "Migration request: Migrate a Java generator configuration from Swagger Codegen 2.x to 3.x that uses oneOf schemas and the webclient library. What config keys change?\n\nApply the migration by identifying the version-specific behavior, updating the client/configuration to the newer form, and verifying the generated request or client output against the source evidence.\n\nPath decision: No deprecation branch was required; use the versioned evidence directly.\n\nEvidence:\n[swagger_v3_reference.pdf p.3] Java client generator — configuration options (v3) Overview ThejavageneratorinSwaggerCodegen3.xcarriesovermost2.xoptionsandaddsahandful ofnewonesrelatedtoOpenAPI3features(e.g.oneOf/anyOfschemasupport). Options table Option Type Default Description sortParamsByRequire dFlag boolean true Placerequired parametersbefore optionalones. ensureUniqueParams boolean true Ensureparameter namesareunique peroperation. allowUnicodeIdentifie rs boolean false Allowunicode identifiersin generatednames. useOneOfInterfaces boolean false New in v3. GeneratesaJava interfaceforeach OpenAPIoneOf schema. library enum okhttp-gson Librarytemplate. v3 addsnativeandweb clientoptionsnot presentinv2. modelPackage string — Packagefor generatedmodels. Runconfig-help-ljavaagainstyourv3CLIjarfortheauthoritative,version-matchedlist—v3’s listdiffersfromv2’sandthetwoconfig-helpoutputsshouldnotbeassumedinterchangeable. Compared to v2 SwaggerCodegen2.x’sjavageneratordocumentedthesesameoptions—sortParamsByReq uiredFlag,ensureUniqueParams,allowUnicodeIdentifiers,library,modelPackage—asaplain bulletedlistratherthanatable,anddefaultsforeachwerewritteninlineinprose,e.g.“(Default: true)”. Thelibraryoptionin2.xonlyacceptedjers\n[swagger_v2_reference.pdf p.2] Java client generator — configuration options ConfigoptionsforthejavaclientgeneratorinSwaggerCodegen2.x,settablevia-cconfig.jso n. • sortParamsByRequiredFlag—Sortmethodargumentstoplacerequiredparameters beforeoptionalparameters. (Default: true) • ensureUniqueParams—Whethertoensureparameternamesareuniqueinanopera- tion. (Default: true) • allowUnicodeIdentifiers—Toggleswhetherunicodeidentifiersareallowedinnames. (Default: false) • modelPackage—Packageforgeneratedmodels. • apiPackage—Packageforgeneratedapiclasses. • library—Librarytemplatetouse: jersey1,jersey2,feign,okhttp-gson,retrofit,retrofit2, resttemplate,resteasy. (Default: okhttp-gson) Runconfig-help-ljavatoseethefull,currentlistforyourinstalledversion. 2\n[swagger_v2_reference.pdf p.3] python generator config options packageName,typestring—pythonpackagename,defaultswagger_client. projectName, typestring—pythonprojectnameinsetup.py,defaultderivedfrompackage- Name. packageVersion,typestring—pythonpackageversion,default1.0.0. sortParamsByRequiredFlag, type boolean — default true, sort method arguments to place requiredparametersbeforeoptionalones. Exampleconfig.json: { \"packageName\": \"petstore_api\", \"packageVersion\": \"1.0.1\" } Passitwith-cconfig.jsononthegeneratecommand. 3",
+          "validation": {
+            "valid": true,
+            "coverage": 0.5,
+            "matched_concepts": [
+              "feign",
+              "java",
+              "jersey1",
+              "jersey2",
+              "library",
+              "okhttp-gson",
+              "oneof",
+              "resteasy",
+              "resttemplate",
+              "retrofit",
+              "retrofit2",
+              "schemas",
+              "useoneofinterfaces",
+              "webclient"
+            ],
+            "expected_concept_count": 28,
+            "valid_citation_count": 3,
+            "required_source_count": 2,
+            "reason": "evidence and migration steps satisfy the validation threshold"
+          },
+          "iterations": 1,
+          "tool_calls": 4,
+          "input_tokens": 116,
+          "output_tokens": 1529,
+          "estimated_cost_usd": 0.0009348,
+          "actual_cost_usd": 0.0,
+          "latency_ms": 0.3099,
+          "aborted": false,
+          "abort_reason": null,
+          "events": [
+            {
+              "event_type": "reasoning",
+              "name": "agent_reasoning",
+              "timestamp_ms": 0.0035,
+              "input_tokens": 0,
+              "output_tokens": 14,
+              "detail": "Thought 1: search, inspect, then choose the next tool."
+            },
+            {
+              "event_type": "tool_call",
+              "name": "search_documentation",
+              "timestamp_ms": 0.1229,
+              "input_tokens": 68,
+              "output_tokens": 761,
+              "detail": "duration_ms=0.118"
+            },
+            {
+              "event_type": "tool_call",
+              "name": "inspect_source",
+              "timestamp_ms": 0.1508,
+              "input_tokens": 16,
+              "output_tokens": 385,
+              "detail": "duration_ms=0.026"
+            },
+            {
+              "event_type": "tool_call",
+              "name": "inspect_source",
+              "timestamp_ms": 0.1693,
+              "input_tokens": 16,
+              "output_tokens": 212,
+              "detail": "duration_ms=0.017"
+            },
+            {
+              "event_type": "tool_call",
+              "name": "inspect_source",
+              "timestamp_ms": 0.1881,
+              "input_tokens": 16,
+              "output_tokens": 157,
+              "detail": "duration_ms=0.017"
+            }
+          ]
+        },
+        {
+          "architecture": "react_agent",
+          "scenario_id": "hard-06",
+          "success": true,
+          "answer": "Migration request: How does the make_latest parameter in GitHub API version 2025-06-01 release creation replace the undocumented heuristic used in 2022-11-28?\n\nApply the migration by identifying the version-specific behavior, updating the client/configuration to the newer form, and verifying the generated request or client output against the source evidence.\n\nPath decision: No deprecation branch was required; use the versioned evidence directly.\n\nEvidence:\n[github_combined_reference.pdf p.13] Example curl -L -X POST -H \"X-GitHub-Api-Version: 2025-06-01\" \\ https://api.github.com/repos/octocat/Hello-World/releases \\ -d '{\"tag_name\":\"v2.0.0\",\"make_latest\":\"true\",\"generate_release_notes\":true}' Returns 201 Created. Previous version (2022-11-28) The prior version had no discussion_category_name field, so linking a discussion to a release required a separate manual step in the UI after the release was published. There was also no make_latest control — whether a release showed as “Latest” was determined purely by an internal heuristic based on publish date and prerelease/draft status, which occasionally marked an older release as “Latest” if a newer one was still in draft. 13",
+          "validation": {
+            "valid": true,
+            "coverage": 0.6538,
+            "matched_concepts": [
+              "based",
+              "control",
+              "date",
+              "determined",
+              "field",
+              "heuristic",
+              "internal",
+              "latest",
+              "make_latest",
+              "prerelease/draft",
+              "publish",
+              "purely",
+              "release",
+              "status",
+              "there",
+              "undocumented",
+              "whether"
+            ],
+            "expected_concept_count": 26,
+            "valid_citation_count": 1,
+            "required_source_count": 1,
+            "reason": "evidence and migration steps satisfy the validation threshold"
+          },
+          "iterations": 1,
+          "tool_calls": 2,
+          "input_tokens": 77,
+          "output_tokens": 443,
+          "estimated_cost_usd": 0.00027735,
+          "actual_cost_usd": 0.0,
+          "latency_ms": 0.16620000000000001,
+          "aborted": false,
+          "abort_reason": null,
+          "events": [
+            {
+              "event_type": "reasoning",
+              "name": "agent_reasoning",
+              "timestamp_ms": 0.003,
+              "input_tokens": 0,
+              "output_tokens": 14,
+              "detail": "Thought 1: search, inspect, then choose the next tool."
+            },
+            {
+              "event_type": "tool_call",
+              "name": "search_documentation",
+              "timestamp_ms": 0.0605,
+              "input_tokens": 60,
+              "output_tokens": 218,
+              "detail": "duration_ms=0.057"
+            },
+            {
+              "event_type": "tool_call",
+              "name": "inspect_source",
+              "timestamp_ms": 0.0866,
+              "input_tokens": 17,
+              "output_tokens": 211,
+              "detail": "duration_ms=0.023"
+            }
+          ]
+        },
+        {
+          "architecture": "react_agent",
+          "scenario_id": "hard-08",
+          "success": true,
+          "answer": "Migration request: How did draft pull requests interact with auto-merge settings in GitHub API version 2022-11-28 versus 2025-06-01?\n\nApply the migration by identifying the version-specific behavior, updating the client/configuration to the newer form, and verifying the generated request or client output against the source evidence.\n\nPath decision: No deprecation branch was required; use the versioned evidence directly.\n\nEvidence:\n[github_combined_reference.pdf p.7] Create a pull request Version 2025-06-01 · reference Overview Opens a pull request against the given repository . Since 2025-06-01, the API supports speci- fying maintainer_can_modify at creation time (previously this required a follow-up PATCH call), and draft pull requests can be created directly as ready-for-review by omitting the field entirely — its default has not changed but its interaction with auto-merge settings has. Path parameters Name T ype owner string repo string Request body Field T ype Required Notes title string Y es Required unless issue is specified. head string Y es Branch or user:branc h for cross-repo. base string Y es The branch you want changes merged into. body string No PR description. draft boolean No Default false. maintainer_can_modi fy boolean No Default true. Now settable at creation time. Example curl -X POST -H \"X-GitHub-Api-Version: 2025-06-01\" \\ https://api.github.com/repos/octocat/Hello-World/pulls \\ -d '{\"title\":\"Amazing feature\", \"head\":\"octocat:new-feature\", \"base\":\"master\", \"maintainer_can_modify\":false}' Returns 201 Created with the pull request object. Previous version (2022-11-28) maintainer_can_modify could not be set at creation time in",
+          "validation": {
+            "valid": true,
+            "coverage": 0.4286,
+            "matched_concepts": [
+              "auto-merge",
+              "could",
+              "directly",
+              "draft",
+              "pull",
+              "request"
+            ],
+            "expected_concept_count": 14,
+            "valid_citation_count": 1,
+            "required_source_count": 1,
+            "reason": "evidence and migration steps satisfy the validation threshold"
+          },
+          "iterations": 1,
+          "tool_calls": 2,
+          "input_tokens": 70,
+          "output_tokens": 869,
+          "estimated_cost_usd": 0.0005319,
+          "actual_cost_usd": 0.0,
+          "latency_ms": 0.1719,
+          "aborted": false,
+          "abort_reason": null,
+          "events": [
+            {
+              "event_type": "reasoning",
+              "name": "agent_reasoning",
+              "timestamp_ms": 0.0027,
+              "input_tokens": 0,
+              "output_tokens": 14,
+              "detail": "Thought 1: search, inspect, then choose the next tool."
+            },
+            {
+              "event_type": "tool_call",
+              "name": "search_documentation",
+              "timestamp_ms": 0.0582,
+              "input_tokens": 53,
+              "output_tokens": 431,
+              "detail": "duration_ms=0.055"
+            },
+            {
+              "event_type": "tool_call",
+              "name": "inspect_source",
+              "timestamp_ms": 0.0806,
+              "input_tokens": 17,
+              "output_tokens": 424,
+              "detail": "duration_ms=0.021"
+            }
+          ]
+        },
+        {
+          "architecture": "react_agent",
+          "scenario_id": "hard-09",
+          "success": true,
+          "answer": "Migration request: Compare how Markdown table rendering behavior changed between GitHub API version 2022-11-28 and 2025-06-01.\n\nApply the migration by identifying the version-specific behavior, updating the client/configuration to the newer form, and verifying the generated request or client output against the source evidence.\n\nPath decision: No deprecation branch was required; use the versioned evidence directly.\n\nEvidence:\n[github_combined_reference.pdf p.3] Render a Markdown document Applies to API version 2025-06-01 and later. Renders a Markdown document server-side, returning either an HTML fragment or raw text depending on the requested mode. T wo changes from earlier API versions: the context field now accepts an owner/repo pair as a structured object rather than a plain string, and a new wrap_tables flag controls whether wide tables are wrapped for narrow viewports. curl -L \\ -X POST \\ -H \"Accept: application/vnd.github+json\" \\ -H \"Authorization: Bearer <YOUR-TOKEN>\" \\ -H \"X-GitHub-Api-Version: 2025-06-01\" \\ https://api.github.com/markdown \\ -d '{\"text\":\"Hello **world**\",\"wrap_tables\":true}' Parameters accepted in the request body: • text (string, required) — The Markdown text to render. • mode (string, optional, default markdown) — One of markdown or gfm. • context (object, optional) — { ”owner”: ”...”, ”repo”: ”...” }. Used for gfm-mode reference linking. • wrap_tables (boolean, optional, default false) — When true, wide tables render with hori- zontal scroll wrappers instead of overflowing. Response body is an HTML string (or raw text, in raw mode). Content must be 400 KB or less. Previous version (2022-11-28) The prior versio",
+          "validation": {
+            "valid": true,
+            "coverage": 0.4737,
+            "matched_concepts": [
+              "flag",
+              "optional",
+              "output",
+              "render",
+              "scroll",
+              "tables",
+              "wide",
+              "wrap_tables",
+              "wrappers"
+            ],
+            "expected_concept_count": 19,
+            "valid_citation_count": 1,
+            "required_source_count": 1,
+            "reason": "evidence and migration steps satisfy the validation threshold"
+          },
+          "iterations": 1,
+          "tool_calls": 2,
+          "input_tokens": 68,
+          "output_tokens": 853,
+          "estimated_cost_usd": 0.000522,
+          "actual_cost_usd": 0.0,
+          "latency_ms": 0.1707,
+          "aborted": false,
+          "abort_reason": null,
+          "events": [
+            {
+              "event_type": "reasoning",
+              "name": "agent_reasoning",
+              "timestamp_ms": 0.0024,
+              "input_tokens": 0,
+              "output_tokens": 14,
+              "detail": "Thought 1: search, inspect, then choose the next tool."
+            },
+            {
+              "event_type": "tool_call",
+              "name": "search_documentation",
+              "timestamp_ms": 0.0553,
+              "input_tokens": 51,
+              "output_tokens": 423,
+              "detail": "duration_ms=0.052"
+            },
+            {
+              "event_type": "tool_call",
+              "name": "inspect_source",
+              "timestamp_ms": 0.0773,
+              "input_tokens": 17,
+              "output_tokens": 416,
+              "detail": "duration_ms=0.020"
+            }
+          ]
+        },
+        {
+          "architecture": "react_agent",
+          "scenario_id": "hard-10",
+          "success": true,
+          "answer": "Migration request: Migrate a Python client configuration file from Swagger Codegen 2.x to 3.x to support asynchronous execution and YAML format. What steps are required?\n\nApply the migration by identifying the version-specific behavior, updating the client/configuration to the newer form, and verifying the generated request or client output against the source evidence.\n\nPath decision: No deprecation branch was required; use the versioned evidence directly.\n\nEvidence:\n[swagger_v3_reference.pdf p.3] Java client generator — configuration options (v3) Overview ThejavageneratorinSwaggerCodegen3.xcarriesovermost2.xoptionsandaddsahandful ofnewonesrelatedtoOpenAPI3features(e.g.oneOf/anyOfschemasupport). Options table Option Type Default Description sortParamsByRequire dFlag boolean true Placerequired parametersbefore optionalones. ensureUniqueParams boolean true Ensureparameter namesareunique peroperation. allowUnicodeIdentifie rs boolean false Allowunicode identifiersin generatednames. useOneOfInterfaces boolean false New in v3. GeneratesaJava interfaceforeach OpenAPIoneOf schema. library enum okhttp-gson Librarytemplate. v3 addsnativeandweb clientoptionsnot presentinv2. modelPackage string — Packagefor generatedmodels. Runconfig-help-ljavaagainstyourv3CLIjarfortheauthoritative,version-matchedlist—v3’s listdiffersfromv2’sandthetwoconfig-helpoutputsshouldnotbeassumedinterchangeable. Compared to v2 SwaggerCodegen2.x’sjavageneratordocumentedthesesameoptions—sortParamsByReq uiredFlag,ensureUniqueParams,allowUnicodeIdentifiers,library,modelPackage—asaplain bulletedlistratherthanatable,anddefaultsforeachwerewritteninlineinprose,e.g.“(Default: true)”. Thelibraryoptionin2.xonlyacceptedjers\n[swagger_v2_reference.pdf p.4] .swagger-codegen-ignore SwaggerCodegen2.xsupportsa.swagger-codegen-ignorefile,similarinsyntaxto.gitignore, placedintheoutputdirectorybeforegeneration. # Ignore this specific file docs/some-doc.md # Ignore all files ending in .foo *.foo # Ignore everything under a folder build/**/* Rulesarereadonce,atthestartofgeneration,andarenotre-readifregeneratinginthesame outputdirectoryinasingleCLIinvocationwithmultiple-ltargets. 4\n[swagger_v3_reference.pdf p.4] Python generator — config options v3 notes Same core options as v2’s python generator, plus library selection between urllib3 (default, unchanged)andasyncio(newinv3,generatesasync/awaitclientmethods). Option Default Notes packageName swagger_client Unchangedfromv2. projectName derivedfrompackageName Unchanged. packageVersion 1.0.0 Unchanged. library urllib3 v3addsasyncioasaselectablevalue. sortParamsByRequiredFlag true Unchanged. { \"packageName\": \"petstore_api\", \"library\": \"asyncio\" } Generatedcodediffersmeaningfullywhenlibrary=asyncioisset—callingcodemustawait APImethodsratherthancallthemsynchronously. Compared to v2 Thev2pythongeneratordocumentedpackageName,projectName,andpackageVersionthe sameway—asplainkey/descriptiontextratherthanatable—buthadnolibraryoptionatall; everygeneratedclientusedwhatv3nowcallstheurllib3behavior,sinceitwastheonlyoption available. Therewasconsequentlynoasynciochoiceandnoasync/awaitgeneratedcodepath in2.x. 4\n[swagger_v2_reference.pdf p.3] python generator config options packageName,typestring—pythonpackagename,defaultswagger_client. projectName, typestring—pythonprojectnameinsetup.py,defaultderivedfrompackage- Name. packageVersion,typestring—pythonpackageversion,default1.0.0. sortParamsByRequiredFlag, type boolean — default true, sort method arguments to place requiredparametersbeforeoptionalones. Exampleconfig.json: { \"packageName\": \"petstore_api\", \"packageVersion\": \"1.0.1\" } Passitwith-cconfig.jsononthegeneratecommand. 3",
+          "validation": {
+            "valid": true,
+            "coverage": 0.3333,
+            "matched_concepts": [
+              "asyncio",
+              "config",
+              "file",
+              "format",
+              "generated",
+              "library",
+              "under",
+              "urllib3",
+              "yaml"
+            ],
+            "expected_concept_count": 27,
+            "valid_citation_count": 4,
+            "required_source_count": 2,
+            "reason": "evidence and migration steps satisfy the validation threshold"
+          },
+          "iterations": 2,
+          "tool_calls": 6,
+          "input_tokens": 213,
+          "output_tokens": 2486,
+          "estimated_cost_usd": 0.0015235499999999998,
+          "actual_cost_usd": 0.0,
+          "latency_ms": 0.612,
+          "aborted": false,
+          "abort_reason": null,
+          "events": [
+            {
+              "event_type": "reasoning",
+              "name": "agent_reasoning",
+              "timestamp_ms": 0.0023,
+              "input_tokens": 0,
+              "output_tokens": 14,
+              "detail": "Thought 1: search, inspect, then choose the next tool."
+            },
+            {
+              "event_type": "tool_call",
+              "name": "search_documentation",
+              "timestamp_ms": 0.119,
+              "input_tokens": 69,
+              "output_tokens": 804,
+              "detail": "duration_ms=0.116"
+            },
+            {
+              "event_type": "tool_call",
+              "name": "inspect_source",
+              "timestamp_ms": 0.1419,
+              "input_tokens": 16,
+              "output_tokens": 385,
+              "detail": "duration_ms=0.021"
+            },
+            {
+              "event_type": "tool_call",
+              "name": "inspect_source",
+              "timestamp_ms": 0.1596,
+              "input_tokens": 16,
+              "output_tokens": 138,
+              "detail": "duration_ms=0.016"
+            },
+            {
+              "event_type": "tool_call",
+              "name": "inspect_source",
+              "timestamp_ms": 0.1829,
+              "input_tokens": 16,
+              "output_tokens": 271,
+              "detail": "duration_ms=0.021"
+            },
+            {
+              "event_type": "reasoning",
+              "name": "agent_reasoning",
+              "timestamp_ms": 0.3137,
+              "input_tokens": 0,
+              "output_tokens": 13,
+              "detail": "Validation failed; refine retrieval before stopping."
+            },
+            {
+              "event_type": "reasoning",
+              "name": "agent_reasoning",
+              "timestamp_ms": 0.3174,
+              "input_tokens": 0,
+              "output_tokens": 14,
+              "detail": "Thought 2: search, inspect, then choose the next tool."
+            },
+            {
+              "event_type": "tool_call",
+              "name": "search_documentation",
+              "timestamp_ms": 0.4404,
+              "input_tokens": 80,
+              "output_tokens": 690,
+              "detail": "duration_ms=0.122"
+            },
+            {
+              "event_type": "tool_call",
+              "name": "inspect_source",
+              "timestamp_ms": 0.4629,
+              "input_tokens": 16,
+              "output_tokens": 157,
+              "detail": "duration_ms=0.019"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "budget_termination": {
+    "architecture": "react_agent",
+    "scenario_id": "medium-01",
+    "triggered_budget": "max_tool_calls",
+    "configured_limit": 1,
+    "clean_termination": true,
+    "abort_reason": "max tool calls exceeded: 1",
+    "iterations": 1,
+    "tool_calls_completed": 1,
+    "log_path": "D:\\Santhoshshivan\\Python\\PythonProject\\week7\\results\\budget_termination.log"
+  },
+  "verdict": {
+    "winner": "react_agent",
+    "conclusion": "Single-architecture run; use the combined race for the verdict."
+  },
+  "result_path": "D:\\Santhoshshivan\\Python\\PythonProject\\week7\\results\\react_agent_results.json"
+}

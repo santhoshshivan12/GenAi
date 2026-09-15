@@ -1,0 +1,9 @@
+Week 7 budget-termination demonstration
+architecture=react_agent
+scenario_id=medium-01
+configured_max_tool_calls=1
+clean_termination=true
+abort_reason=max tool calls exceeded: 1
+iterations=1
+tool_calls_completed=1
+The runner returned a failed RunResult instead of spinning.

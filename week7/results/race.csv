@@ -1,0 +1,5 @@
+metric,react_agent,deterministic_workflow
+Pass rate (%),100.0,100.0
+p50 latency (ms),0.324,0.27
+Total tokens,14787,13185
+Cost per question (actual USD),0.0,0.0
