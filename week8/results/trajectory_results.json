@@ -1,0 +1,1535 @@
+{
+  "metadata": {
+    "week": 8,
+    "run_timestamp_utc": "2026-09-21T17:37:28.192149+00:00",
+    "case_count": 10,
+    "baseline": "week7.architectures.ReActAgent",
+    "single_mitigation": "re-planning",
+    "alternate_path_cases": [
+      "hard-03",
+      "hard-05",
+      "hard-10"
+    ]
+  },
+  "before": {
+    "metrics": {
+      "case_count": 10,
+      "outcome_pass_rate_pct": 100.0,
+      "trajectory_pass_rate_pct": 70.0,
+      "outcome_vs_trajectory_gap_percentage_points": 30.0,
+      "tool_choice_accuracy_pct": 85.29,
+      "argument_validity_rate_pct": 100.0,
+      "step_efficiency_taken_over_needed": 1.1667,
+      "cost_per_question_p50_usd": 0.00095378,
+      "cost_per_question_max_usd": 0.00152355,
+      "latency_p50_ms": 0.349,
+      "tokens_p50": 1692.0,
+      "failure_mode_counts": {
+        "wrong_tool_choice": 0,
+        "invalid_arguments": 0,
+        "missing_required_step": 0,
+        "unnecessary_steps": 3,
+        "repeated_tool_loop": 0,
+        "premature_termination": 0,
+        "outcome_failure": 0,
+        "right_answer_wrong_path": 3
+      }
+    },
+    "cases": [
+      {
+        "scenario_id": "medium-01",
+        "outcome_pass": true,
+        "trajectory_pass": true,
+        "sequence_valid": true,
+        "arguments_valid": true,
+        "argument_checks": [
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "check_deprecation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          }
+        ],
+        "actual_trajectory": [
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "In GitHub API version 2025-06-01, what parameter replaces the deprecated single assignee field when creating an issue?",
+              "source_files": [
+                "github_combined_reference.pdf"
+              ],
+              "page_numbers": [
+                5
+              ],
+              "top_k": 3
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "github_combined_reference.pdf",
+              "page_number": 5
+            }
+          },
+          {
+            "tool": "check_deprecation",
+            "arguments": {
+              "api_version": "2025-06-01",
+              "endpoint": "POST /repos/{owner}/{repo}/issues",
+              "parameter": "assignee"
+            }
+          },
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "In GitHub API version 2025-06-01, what parameter replaces the deprecated single assignee field when creating an issue? replacement assignees",
+              "source_files": [
+                "github_combined_reference.pdf"
+              ],
+              "page_numbers": [
+                5
+              ],
+              "top_k": 3
+            }
+          }
+        ],
+        "accepted_path_count": 1,
+        "alternate_paths_allowed": false,
+        "actual_steps": 4,
+        "optimal_steps": 4,
+        "step_efficiency_taken_over_needed": 1.0,
+        "tool_choice_matches": 4,
+        "tool_choice_denominator": 4,
+        "estimated_cost_usd": 0.00097275,
+        "latency_ms": 0.9541000000000001,
+        "total_tokens": 1739,
+        "failure_modes": []
+      },
+      {
+        "scenario_id": "medium-04",
+        "outcome_pass": true,
+        "trajectory_pass": true,
+        "sequence_valid": true,
+        "arguments_valid": true,
+        "argument_checks": [
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "check_deprecation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          }
+        ],
+        "actual_trajectory": [
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "What is the default behavior of has_issues when creating a private repository in GitHub API version 2025-06-01 vs 2022-11-28?",
+              "source_files": [
+                "github_combined_reference.pdf"
+              ],
+              "page_numbers": [
+                9
+              ],
+              "top_k": 3
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "github_combined_reference.pdf",
+              "page_number": 9
+            }
+          },
+          {
+            "tool": "check_deprecation",
+            "arguments": {
+              "api_version": "2025-06-01",
+              "endpoint": "POST /user/repos",
+              "parameter": "has_issues"
+            }
+          },
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "What is the default behavior of has_issues when creating a private repository in GitHub API version 2025-06-01 vs 2022-11-28? version-specific behavior",
+              "source_files": [
+                "github_combined_reference.pdf"
+              ],
+              "page_numbers": [
+                9
+              ],
+              "top_k": 3
+            }
+          }
+        ],
+        "accepted_path_count": 1,
+        "alternate_paths_allowed": false,
+        "actual_steps": 4,
+        "optimal_steps": 4,
+        "step_efficiency_taken_over_needed": 1.0,
+        "tool_choice_matches": 4,
+        "tool_choice_denominator": 4,
+        "estimated_cost_usd": 0.0009895499999999998,
+        "latency_ms": 0.6214999999999999,
+        "total_tokens": 1767,
+        "failure_modes": []
+      },
+      {
+        "scenario_id": "medium-07",
+        "outcome_pass": true,
+        "trajectory_pass": true,
+        "sequence_valid": true,
+        "arguments_valid": true,
+        "argument_checks": [
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "check_deprecation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          }
+        ],
+        "actual_trajectory": [
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "What new visibility enum values are supported when creating a repository in GitHub API version 2025-06-01?",
+              "source_files": [
+                "github_combined_reference.pdf"
+              ],
+              "page_numbers": [
+                9
+              ],
+              "top_k": 3
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "github_combined_reference.pdf",
+              "page_number": 9
+            }
+          },
+          {
+            "tool": "check_deprecation",
+            "arguments": {
+              "api_version": "2025-06-01",
+              "endpoint": "POST /user/repos",
+              "parameter": "private"
+            }
+          },
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "What new visibility enum values are supported when creating a repository in GitHub API version 2025-06-01? replacement visibility",
+              "source_files": [
+                "github_combined_reference.pdf"
+              ],
+              "page_numbers": [
+                9
+              ],
+              "top_k": 3
+            }
+          }
+        ],
+        "accepted_path_count": 1,
+        "alternate_paths_allowed": false,
+        "actual_steps": 4,
+        "optimal_steps": 4,
+        "step_efficiency_taken_over_needed": 1.0,
+        "tool_choice_matches": 4,
+        "tool_choice_denominator": 4,
+        "estimated_cost_usd": 0.00098985,
+        "latency_ms": 0.554,
+        "total_tokens": 1760,
+        "failure_modes": []
+      },
+      {
+        "scenario_id": "hard-01",
+        "outcome_pass": true,
+        "trajectory_pass": true,
+        "sequence_valid": true,
+        "arguments_valid": true,
+        "argument_checks": [
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          }
+        ],
+        "actual_trajectory": [
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "Compare how the context parameter format changed between GitHub API version 2022-11-28 and 2025-06-01 for rendering Markdown.",
+              "source_files": [
+                "github_combined_reference.pdf"
+              ],
+              "page_numbers": [
+                3
+              ],
+              "top_k": 3
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "github_combined_reference.pdf",
+              "page_number": 3
+            }
+          }
+        ],
+        "accepted_path_count": 1,
+        "alternate_paths_allowed": false,
+        "actual_steps": 2,
+        "optimal_steps": 2,
+        "step_efficiency_taken_over_needed": 1.0,
+        "tool_choice_matches": 2,
+        "tool_choice_denominator": 2,
+        "estimated_cost_usd": 0.00052275,
+        "latency_ms": 0.2014,
+        "total_tokens": 926,
+        "failure_modes": []
+      },
+      {
+        "scenario_id": "hard-03",
+        "outcome_pass": true,
+        "trajectory_pass": false,
+        "sequence_valid": false,
+        "arguments_valid": true,
+        "argument_checks": [
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          }
+        ],
+        "actual_trajectory": [
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "What top-level configuration key was introduced in Swagger Codegen v3 config files to nest generator-specific options that did not exist in v2?",
+              "source_files": [
+                "swagger_v3_reference.pdf",
+                "swagger_v2_reference.pdf"
+              ],
+              "page_numbers": [
+                6,
+                5
+              ],
+              "top_k": 3
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "swagger_v3_reference.pdf",
+              "page_number": 6
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "swagger_v3_reference.pdf",
+              "page_number": 5
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "swagger_v2_reference.pdf",
+              "page_number": 5
+            }
+          }
+        ],
+        "accepted_path_count": 2,
+        "alternate_paths_allowed": true,
+        "actual_steps": 4,
+        "optimal_steps": 3,
+        "step_efficiency_taken_over_needed": 1.3333,
+        "tool_choice_matches": 3,
+        "tool_choice_denominator": 4,
+        "estimated_cost_usd": 0.0010708499999999997,
+        "latency_ms": 0.36450000000000005,
+        "total_tokens": 1871,
+        "failure_modes": [
+          "unnecessary_steps",
+          "right_answer_wrong_path"
+        ]
+      },
+      {
+        "scenario_id": "hard-05",
+        "outcome_pass": true,
+        "trajectory_pass": false,
+        "sequence_valid": false,
+        "arguments_valid": true,
+        "argument_checks": [
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          }
+        ],
+        "actual_trajectory": [
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "Migrate a Java generator configuration from Swagger Codegen 2.x to 3.x that uses oneOf schemas and the webclient library. What config keys change?",
+              "source_files": [
+                "swagger_v3_reference.pdf",
+                "swagger_v2_reference.pdf"
+              ],
+              "page_numbers": [
+                3,
+                2
+              ],
+              "top_k": 3
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "swagger_v3_reference.pdf",
+              "page_number": 3
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "swagger_v2_reference.pdf",
+              "page_number": 2
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "swagger_v2_reference.pdf",
+              "page_number": 3
+            }
+          }
+        ],
+        "accepted_path_count": 2,
+        "alternate_paths_allowed": true,
+        "actual_steps": 4,
+        "optimal_steps": 3,
+        "step_efficiency_taken_over_needed": 1.3333,
+        "tool_choice_matches": 3,
+        "tool_choice_denominator": 4,
+        "estimated_cost_usd": 0.0009348,
+        "latency_ms": 0.33349999999999996,
+        "total_tokens": 1645,
+        "failure_modes": [
+          "unnecessary_steps",
+          "right_answer_wrong_path"
+        ]
+      },
+      {
+        "scenario_id": "hard-06",
+        "outcome_pass": true,
+        "trajectory_pass": true,
+        "sequence_valid": true,
+        "arguments_valid": true,
+        "argument_checks": [
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          }
+        ],
+        "actual_trajectory": [
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "How does the make_latest parameter in GitHub API version 2025-06-01 release creation replace the undocumented heuristic used in 2022-11-28?",
+              "source_files": [
+                "github_combined_reference.pdf"
+              ],
+              "page_numbers": [
+                13
+              ],
+              "top_k": 3
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "github_combined_reference.pdf",
+              "page_number": 13
+            }
+          }
+        ],
+        "accepted_path_count": 1,
+        "alternate_paths_allowed": false,
+        "actual_steps": 2,
+        "optimal_steps": 2,
+        "step_efficiency_taken_over_needed": 1.0,
+        "tool_choice_matches": 2,
+        "tool_choice_denominator": 2,
+        "estimated_cost_usd": 0.00027735,
+        "latency_ms": 0.1698,
+        "total_tokens": 520,
+        "failure_modes": []
+      },
+      {
+        "scenario_id": "hard-08",
+        "outcome_pass": true,
+        "trajectory_pass": true,
+        "sequence_valid": true,
+        "arguments_valid": true,
+        "argument_checks": [
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          }
+        ],
+        "actual_trajectory": [
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "How did draft pull requests interact with auto-merge settings in GitHub API version 2022-11-28 versus 2025-06-01?",
+              "source_files": [
+                "github_combined_reference.pdf"
+              ],
+              "page_numbers": [
+                7
+              ],
+              "top_k": 3
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "github_combined_reference.pdf",
+              "page_number": 7
+            }
+          }
+        ],
+        "accepted_path_count": 1,
+        "alternate_paths_allowed": false,
+        "actual_steps": 2,
+        "optimal_steps": 2,
+        "step_efficiency_taken_over_needed": 1.0,
+        "tool_choice_matches": 2,
+        "tool_choice_denominator": 2,
+        "estimated_cost_usd": 0.0005319,
+        "latency_ms": 0.1913,
+        "total_tokens": 939,
+        "failure_modes": []
+      },
+      {
+        "scenario_id": "hard-09",
+        "outcome_pass": true,
+        "trajectory_pass": true,
+        "sequence_valid": true,
+        "arguments_valid": true,
+        "argument_checks": [
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          }
+        ],
+        "actual_trajectory": [
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "Compare how Markdown table rendering behavior changed between GitHub API version 2022-11-28 and 2025-06-01.",
+              "source_files": [
+                "github_combined_reference.pdf"
+              ],
+              "page_numbers": [
+                3
+              ],
+              "top_k": 3
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "github_combined_reference.pdf",
+              "page_number": 3
+            }
+          }
+        ],
+        "accepted_path_count": 1,
+        "alternate_paths_allowed": false,
+        "actual_steps": 2,
+        "optimal_steps": 2,
+        "step_efficiency_taken_over_needed": 1.0,
+        "tool_choice_matches": 2,
+        "tool_choice_denominator": 2,
+        "estimated_cost_usd": 0.000522,
+        "latency_ms": 0.20900000000000002,
+        "total_tokens": 921,
+        "failure_modes": []
+      },
+      {
+        "scenario_id": "hard-10",
+        "outcome_pass": true,
+        "trajectory_pass": false,
+        "sequence_valid": false,
+        "arguments_valid": true,
+        "argument_checks": [
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          }
+        ],
+        "actual_trajectory": [
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "Migrate a Python client configuration file from Swagger Codegen 2.x to 3.x to support asynchronous execution and YAML format. What steps are required?",
+              "source_files": [
+                "swagger_v3_reference.pdf",
+                "swagger_v2_reference.pdf"
+              ],
+              "page_numbers": [
+                4,
+                3
+              ],
+              "top_k": 3
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "swagger_v3_reference.pdf",
+              "page_number": 3
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "swagger_v2_reference.pdf",
+              "page_number": 4
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "swagger_v3_reference.pdf",
+              "page_number": 4
+            }
+          },
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "Migrate a Python client configuration file from Swagger Codegen 2.x to 3.x to support asynchronous execution and YAML format. What steps are required? migration compatibility defaults comparison",
+              "source_files": [
+                "swagger_v3_reference.pdf",
+                "swagger_v2_reference.pdf"
+              ],
+              "page_numbers": [
+                4,
+                3
+              ],
+              "top_k": 3
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "swagger_v2_reference.pdf",
+              "page_number": 3
+            }
+          }
+        ],
+        "accepted_path_count": 2,
+        "alternate_paths_allowed": true,
+        "actual_steps": 6,
+        "optimal_steps": 3,
+        "step_efficiency_taken_over_needed": 2.0,
+        "tool_choice_matches": 3,
+        "tool_choice_denominator": 6,
+        "estimated_cost_usd": 0.0015235499999999998,
+        "latency_ms": 0.7791,
+        "total_tokens": 2699,
+        "failure_modes": [
+          "unnecessary_steps",
+          "right_answer_wrong_path"
+        ]
+      }
+    ]
+  },
+  "after": {
+    "metrics": {
+      "case_count": 10,
+      "outcome_pass_rate_pct": 100.0,
+      "trajectory_pass_rate_pct": 100.0,
+      "outcome_vs_trajectory_gap_percentage_points": 0.0,
+      "tool_choice_accuracy_pct": 100.0,
+      "argument_validity_rate_pct": 100.0,
+      "step_efficiency_taken_over_needed": 1.0,
+      "cost_per_question_p50_usd": 0.00080948,
+      "cost_per_question_max_usd": 0.00099885,
+      "latency_p50_ms": 0.2938,
+      "tokens_p50": 1424.5,
+      "failure_mode_counts": {
+        "wrong_tool_choice": 0,
+        "invalid_arguments": 0,
+        "missing_required_step": 0,
+        "unnecessary_steps": 0,
+        "repeated_tool_loop": 0,
+        "premature_termination": 0,
+        "outcome_failure": 0,
+        "right_answer_wrong_path": 0
+      }
+    },
+    "cases": [
+      {
+        "scenario_id": "medium-01",
+        "outcome_pass": true,
+        "trajectory_pass": true,
+        "sequence_valid": true,
+        "arguments_valid": true,
+        "argument_checks": [
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "check_deprecation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          }
+        ],
+        "actual_trajectory": [
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "In GitHub API version 2025-06-01, what parameter replaces the deprecated single assignee field when creating an issue?",
+              "source_files": [
+                "github_combined_reference.pdf"
+              ],
+              "page_numbers": [
+                5
+              ],
+              "top_k": 3
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "github_combined_reference.pdf",
+              "page_number": 5
+            }
+          },
+          {
+            "tool": "check_deprecation",
+            "arguments": {
+              "api_version": "2025-06-01",
+              "endpoint": "POST /repos/{owner}/{repo}/issues",
+              "parameter": "assignee"
+            }
+          },
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "In GitHub API version 2025-06-01, what parameter replaces the deprecated single assignee field when creating an issue? replacement assignees",
+              "source_files": [
+                "github_combined_reference.pdf"
+              ],
+              "page_numbers": [
+                5
+              ],
+              "top_k": 3
+            }
+          }
+        ],
+        "accepted_path_count": 1,
+        "alternate_paths_allowed": false,
+        "actual_steps": 4,
+        "optimal_steps": 4,
+        "step_efficiency_taken_over_needed": 1.0,
+        "tool_choice_matches": 4,
+        "tool_choice_denominator": 4,
+        "estimated_cost_usd": 0.00098175,
+        "latency_ms": 0.5222,
+        "total_tokens": 1754,
+        "failure_modes": []
+      },
+      {
+        "scenario_id": "medium-04",
+        "outcome_pass": true,
+        "trajectory_pass": true,
+        "sequence_valid": true,
+        "arguments_valid": true,
+        "argument_checks": [
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "check_deprecation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          }
+        ],
+        "actual_trajectory": [
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "What is the default behavior of has_issues when creating a private repository in GitHub API version 2025-06-01 vs 2022-11-28?",
+              "source_files": [
+                "github_combined_reference.pdf"
+              ],
+              "page_numbers": [
+                9
+              ],
+              "top_k": 3
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "github_combined_reference.pdf",
+              "page_number": 9
+            }
+          },
+          {
+            "tool": "check_deprecation",
+            "arguments": {
+              "api_version": "2025-06-01",
+              "endpoint": "POST /user/repos",
+              "parameter": "has_issues"
+            }
+          },
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "What is the default behavior of has_issues when creating a private repository in GitHub API version 2025-06-01 vs 2022-11-28? version-specific behavior",
+              "source_files": [
+                "github_combined_reference.pdf"
+              ],
+              "page_numbers": [
+                9
+              ],
+              "top_k": 3
+            }
+          }
+        ],
+        "accepted_path_count": 1,
+        "alternate_paths_allowed": false,
+        "actual_steps": 4,
+        "optimal_steps": 4,
+        "step_efficiency_taken_over_needed": 1.0,
+        "tool_choice_matches": 4,
+        "tool_choice_denominator": 4,
+        "estimated_cost_usd": 0.00099855,
+        "latency_ms": 0.4218,
+        "total_tokens": 1782,
+        "failure_modes": []
+      },
+      {
+        "scenario_id": "medium-07",
+        "outcome_pass": true,
+        "trajectory_pass": true,
+        "sequence_valid": true,
+        "arguments_valid": true,
+        "argument_checks": [
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "check_deprecation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          }
+        ],
+        "actual_trajectory": [
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "What new visibility enum values are supported when creating a repository in GitHub API version 2025-06-01?",
+              "source_files": [
+                "github_combined_reference.pdf"
+              ],
+              "page_numbers": [
+                9
+              ],
+              "top_k": 3
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "github_combined_reference.pdf",
+              "page_number": 9
+            }
+          },
+          {
+            "tool": "check_deprecation",
+            "arguments": {
+              "api_version": "2025-06-01",
+              "endpoint": "POST /user/repos",
+              "parameter": "private"
+            }
+          },
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "What new visibility enum values are supported when creating a repository in GitHub API version 2025-06-01? replacement visibility",
+              "source_files": [
+                "github_combined_reference.pdf"
+              ],
+              "page_numbers": [
+                9
+              ],
+              "top_k": 3
+            }
+          }
+        ],
+        "accepted_path_count": 1,
+        "alternate_paths_allowed": false,
+        "actual_steps": 4,
+        "optimal_steps": 4,
+        "step_efficiency_taken_over_needed": 1.0,
+        "tool_choice_matches": 4,
+        "tool_choice_denominator": 4,
+        "estimated_cost_usd": 0.00099885,
+        "latency_ms": 0.4105,
+        "total_tokens": 1775,
+        "failure_modes": []
+      },
+      {
+        "scenario_id": "hard-01",
+        "outcome_pass": true,
+        "trajectory_pass": true,
+        "sequence_valid": true,
+        "arguments_valid": true,
+        "argument_checks": [
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          }
+        ],
+        "actual_trajectory": [
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "Compare how the context parameter format changed between GitHub API version 2022-11-28 and 2025-06-01 for rendering Markdown.",
+              "source_files": [
+                "github_combined_reference.pdf"
+              ],
+              "page_numbers": [
+                3
+              ],
+              "top_k": 3
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "github_combined_reference.pdf",
+              "page_number": 3
+            }
+          }
+        ],
+        "accepted_path_count": 1,
+        "alternate_paths_allowed": false,
+        "actual_steps": 2,
+        "optimal_steps": 2,
+        "step_efficiency_taken_over_needed": 1.0,
+        "tool_choice_matches": 2,
+        "tool_choice_denominator": 2,
+        "estimated_cost_usd": 0.00053175,
+        "latency_ms": 0.19019999999999998,
+        "total_tokens": 941,
+        "failure_modes": []
+      },
+      {
+        "scenario_id": "hard-03",
+        "outcome_pass": true,
+        "trajectory_pass": true,
+        "sequence_valid": true,
+        "arguments_valid": true,
+        "argument_checks": [
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          }
+        ],
+        "actual_trajectory": [
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "What top-level configuration key was introduced in Swagger Codegen v3 config files to nest generator-specific options that did not exist in v2?",
+              "source_files": [
+                "swagger_v3_reference.pdf",
+                "swagger_v2_reference.pdf"
+              ],
+              "page_numbers": [
+                6,
+                5
+              ],
+              "top_k": 3
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "swagger_v3_reference.pdf",
+              "page_number": 6
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "swagger_v2_reference.pdf",
+              "page_number": 5
+            }
+          }
+        ],
+        "accepted_path_count": 2,
+        "alternate_paths_allowed": true,
+        "actual_steps": 3,
+        "optimal_steps": 3,
+        "step_efficiency_taken_over_needed": 1.0,
+        "tool_choice_matches": 3,
+        "tool_choice_denominator": 3,
+        "estimated_cost_usd": 0.0009262499999999999,
+        "latency_ms": 0.3034,
+        "total_tokens": 1618,
+        "failure_modes": []
+      },
+      {
+        "scenario_id": "hard-05",
+        "outcome_pass": true,
+        "trajectory_pass": true,
+        "sequence_valid": true,
+        "arguments_valid": true,
+        "argument_checks": [
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          }
+        ],
+        "actual_trajectory": [
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "Migrate a Java generator configuration from Swagger Codegen 2.x to 3.x that uses oneOf schemas and the webclient library. What config keys change?",
+              "source_files": [
+                "swagger_v3_reference.pdf",
+                "swagger_v2_reference.pdf"
+              ],
+              "page_numbers": [
+                3,
+                2
+              ],
+              "top_k": 3
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "swagger_v3_reference.pdf",
+              "page_number": 3
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "swagger_v2_reference.pdf",
+              "page_number": 2
+            }
+          }
+        ],
+        "accepted_path_count": 2,
+        "alternate_paths_allowed": true,
+        "actual_steps": 3,
+        "optimal_steps": 3,
+        "step_efficiency_taken_over_needed": 1.0,
+        "tool_choice_matches": 3,
+        "tool_choice_denominator": 3,
+        "estimated_cost_usd": 0.0008472,
+        "latency_ms": 0.29109999999999997,
+        "total_tokens": 1487,
+        "failure_modes": []
+      },
+      {
+        "scenario_id": "hard-06",
+        "outcome_pass": true,
+        "trajectory_pass": true,
+        "sequence_valid": true,
+        "arguments_valid": true,
+        "argument_checks": [
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          }
+        ],
+        "actual_trajectory": [
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "How does the make_latest parameter in GitHub API version 2025-06-01 release creation replace the undocumented heuristic used in 2022-11-28?",
+              "source_files": [
+                "github_combined_reference.pdf"
+              ],
+              "page_numbers": [
+                13
+              ],
+              "top_k": 3
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "github_combined_reference.pdf",
+              "page_number": 13
+            }
+          }
+        ],
+        "accepted_path_count": 1,
+        "alternate_paths_allowed": false,
+        "actual_steps": 2,
+        "optimal_steps": 2,
+        "step_efficiency_taken_over_needed": 1.0,
+        "tool_choice_matches": 2,
+        "tool_choice_denominator": 2,
+        "estimated_cost_usd": 0.00028635,
+        "latency_ms": 0.1725,
+        "total_tokens": 535,
+        "failure_modes": []
+      },
+      {
+        "scenario_id": "hard-08",
+        "outcome_pass": true,
+        "trajectory_pass": true,
+        "sequence_valid": true,
+        "arguments_valid": true,
+        "argument_checks": [
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          }
+        ],
+        "actual_trajectory": [
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "How did draft pull requests interact with auto-merge settings in GitHub API version 2022-11-28 versus 2025-06-01?",
+              "source_files": [
+                "github_combined_reference.pdf"
+              ],
+              "page_numbers": [
+                7
+              ],
+              "top_k": 3
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "github_combined_reference.pdf",
+              "page_number": 7
+            }
+          }
+        ],
+        "accepted_path_count": 1,
+        "alternate_paths_allowed": false,
+        "actual_steps": 2,
+        "optimal_steps": 2,
+        "step_efficiency_taken_over_needed": 1.0,
+        "tool_choice_matches": 2,
+        "tool_choice_denominator": 2,
+        "estimated_cost_usd": 0.0005409,
+        "latency_ms": 0.1867,
+        "total_tokens": 954,
+        "failure_modes": []
+      },
+      {
+        "scenario_id": "hard-09",
+        "outcome_pass": true,
+        "trajectory_pass": true,
+        "sequence_valid": true,
+        "arguments_valid": true,
+        "argument_checks": [
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          }
+        ],
+        "actual_trajectory": [
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "Compare how Markdown table rendering behavior changed between GitHub API version 2022-11-28 and 2025-06-01.",
+              "source_files": [
+                "github_combined_reference.pdf"
+              ],
+              "page_numbers": [
+                3
+              ],
+              "top_k": 3
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "github_combined_reference.pdf",
+              "page_number": 3
+            }
+          }
+        ],
+        "accepted_path_count": 1,
+        "alternate_paths_allowed": false,
+        "actual_steps": 2,
+        "optimal_steps": 2,
+        "step_efficiency_taken_over_needed": 1.0,
+        "tool_choice_matches": 2,
+        "tool_choice_denominator": 2,
+        "estimated_cost_usd": 0.000531,
+        "latency_ms": 0.1986,
+        "total_tokens": 936,
+        "failure_modes": []
+      },
+      {
+        "scenario_id": "hard-10",
+        "outcome_pass": true,
+        "trajectory_pass": true,
+        "sequence_valid": true,
+        "arguments_valid": true,
+        "argument_checks": [
+          {
+            "tool": "search_documentation",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          },
+          {
+            "tool": "inspect_source",
+            "valid": true,
+            "reason": "valid"
+          }
+        ],
+        "actual_trajectory": [
+          {
+            "tool": "search_documentation",
+            "arguments": {
+              "query": "Migrate a Python client configuration file from Swagger Codegen 2.x to 3.x to support asynchronous execution and YAML format. What steps are required?",
+              "source_files": [
+                "swagger_v3_reference.pdf",
+                "swagger_v2_reference.pdf"
+              ],
+              "page_numbers": [
+                4,
+                3
+              ],
+              "top_k": 3
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "swagger_v3_reference.pdf",
+              "page_number": 4
+            }
+          },
+          {
+            "tool": "inspect_source",
+            "arguments": {
+              "source_file": "swagger_v2_reference.pdf",
+              "page_number": 3
+            }
+          }
+        ],
+        "accepted_path_count": 2,
+        "alternate_paths_allowed": true,
+        "actual_steps": 3,
+        "optimal_steps": 3,
+        "step_efficiency_taken_over_needed": 1.0,
+        "tool_choice_matches": 3,
+        "tool_choice_denominator": 3,
+        "estimated_cost_usd": 0.0007717500000000001,
+        "latency_ms": 0.2965,
+        "total_tokens": 1362,
+        "failure_modes": []
+      }
+    ]
+  },
+  "right_answer_wrong_path_example": {
+    "scenario_id": "hard-10",
+    "trace": "search_documentation -> inspect_source -> inspect_source -> inspect_source -> search_documentation -> inspect_source",
+    "actual_steps": 6,
+    "optimal_steps": 3
+  },
+  "mitigation": {
+    "name": "re-planning",
+    "target_mode": "unnecessary_steps",
+    "before_count": 3,
+    "after_count": 0,
+    "price": {
+      "measure": "added re-planning reasoning tokens per question",
+      "p50_tokens": 15.0,
+      "max_tokens": 15
+    }
+  },
+  "regression": [
+    {
+      "mode": "wrong_tool_choice",
+      "before": 0,
+      "after": 0,
+      "delta": 0
+    },
+    {
+      "mode": "invalid_arguments",
+      "before": 0,
+      "after": 0,
+      "delta": 0
+    },
+    {
+      "mode": "missing_required_step",
+      "before": 0,
+      "after": 0,
+      "delta": 0
+    },
+    {
+      "mode": "unnecessary_steps",
+      "before": 3,
+      "after": 0,
+      "delta": -3
+    },
+    {
+      "mode": "repeated_tool_loop",
+      "before": 0,
+      "after": 0,
+      "delta": 0
+    },
+    {
+      "mode": "premature_termination",
+      "before": 0,
+      "after": 0,
+      "delta": 0
+    },
+    {
+      "mode": "outcome_failure",
+      "before": 0,
+      "after": 0,
+      "delta": 0
+    },
+    {
+      "mode": "right_answer_wrong_path",
+      "before": 3,
+      "after": 0,
+      "delta": -3
+    }
+  ],
+  "regression_summary": {
+    "worsened_or_new": [],
+    "checked_modes": [
+      "wrong_tool_choice",
+      "invalid_arguments",
+      "missing_required_step",
+      "unnecessary_steps",
+      "repeated_tool_loop",
+      "premature_termination",
+      "outcome_failure",
+      "right_answer_wrong_path"
+    ]
+  }
+}
