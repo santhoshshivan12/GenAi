@@ -1,0 +1,85 @@
+--- config_server1.json
++++ config_server1_plus_2.json
+@@
+     {"name": "docs-search", "command": ["python", "-m", "mcp.docs_server"]}
++    ,{"name": "package-registry", "command": ["python", "-m", "mcp.package_registry_server"]}
+*** Add File: D:\Santhoshshivan\Python\PythonProject\mcp\wire.json
+{
+  "exchanges": [
+    {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "initialize",
+        "params": {
+          "protocolVersion": "2025-06-18",
+          "clientInfo": {"name": "mcp-agent", "version": "1.0"}
+        }
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "protocolVersion": "2025-06-18",
+          "capabilities": {"tools": {"listChanged": false}},
+          "serverInfo": {"name": "package-registry", "version": "1.0.0"}
+        }
+      },
+      "annotations": {
+        "jsonrpc": "JSON-RPC protocol version.",
+        "id": "Correlates this response with request 1.",
+        "method": "initialize asks the server to establish the MCP session.",
+        "params": "Client protocol version and client identity.",
+        "result": "Successful handshake payload.",
+        "protocolVersion": "Version negotiated by host and server.",
+        "capabilities": "Server features available to the client.",
+        "serverInfo": "Human-readable server identity and version."
+      }
+    },
+    {
+      "request": {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}},
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "tools": [
+            {"name": "lookup_package_version", "description": "Return version metadata and release date for a package.", "inputSchema": {"type": "object", "required": ["package"], "properties": {"package": {"type": "string"}}}},
+            {"name": "get_deprecation_notice", "description": "Return deprecation notices and migration guidance for a package version.", "inputSchema": {"type": "object", "required": ["package", "version"], "properties": {"package": {"type": "string"}, "version": {"type": "string"}}}}
+          ]
+        }
+      },
+      "annotations": {
+        "jsonrpc": "JSON-RPC protocol version.",
+        "id": "Correlates this response with request 2.",
+        "method": "tools/list asks the server for discoverable tools.",
+        "params": "Empty object: no filter was requested.",
+        "result": "Successful discovery payload.",
+        "tools": "The server-owned tool definitions; the agent did not hard-code them.",
+        "name": "Tool name later used in tools/call.",
+        "description": "Docstring-like prompt presented to the model.",
+        "inputSchema": "JSON Schema for valid tool arguments."
+      }
+    },
+    {
+      "request": {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "lookup_package_version", "arguments": {"package": "acme-sdk"}}},
+      "response": {
+        "jsonrpc": "2.0",
+        "id": 3,
+        "result": {"content": [{"type": "text", "text": "{'package': 'acme-sdk', 'latest': '3.2.0', 'released': '2026-01-15', 'deprecated': {'2.0': 'Use the v3 migration guide and replace ClientV2 with Client.'}, 'source': 'internal package registry fixture'}"}]}
+      },
+      "annotations": {
+        "jsonrpc": "JSON-RPC protocol version.",
+        "id": "Correlates this response with request 3.",
+        "method": "tools/call invokes the discovered capability.",
+        "params": "Tool name and model-selected arguments.",
+        "name": "The exact discovered tool name proving server two was called.",
+        "arguments": "The package selected for lookup.",
+        "result": "Successful tool result.",
+        "content": "MCP content blocks returned to the host model.",
+        "type": "This block contains text.",
+        "text": "Package version, release date, and deprecation metadata."
+      }
+    }
+  ],
+  "model_call_location": "The model call happens in the host after discovery/tool results; it does not happen in either MCP server."
+}

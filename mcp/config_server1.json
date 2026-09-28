@@ -1,0 +1,5 @@
+{
+  "mcpServers": [
+    {"name": "docs-search", "command": ["python", "-m", "mcp.docs_server"]}
+  ]
+}
