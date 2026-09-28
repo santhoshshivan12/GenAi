@@ -1,0 +1,20 @@
+{
+  "exchanges": [
+    {
+      "request": {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18", "clientInfo": {"name": "mcp-agent", "version": "1.0"}}},
+      "response": {"jsonrpc": "2.0", "id": 1, "result": {"protocolVersion": "2025-06-18", "capabilities": {"tools": {"listChanged": false}}, "serverInfo": {"name": "package-registry", "version": "1.0.0"}}},
+      "annotations": {"jsonrpc": "JSON-RPC protocol version.", "id": "Correlates response to request 1.", "method": "Starts the MCP session.", "params": "Client protocol and identity.", "result": "Successful handshake.", "protocolVersion": "Negotiated protocol version.", "capabilities": "Server features.", "serverInfo": "Server identity."}
+    },
+    {
+      "request": {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}},
+      "response": {"jsonrpc": "2.0", "id": 2, "result": {"tools": [{"name": "lookup_package_version", "description": "Return version metadata and release date for a package.", "inputSchema": {"type": "object", "required": ["package"], "properties": {"package": {"type": "string"}}}}, {"name": "get_deprecation_notice", "description": "Return deprecation notices and migration guidance for a package version.", "inputSchema": {"type": "object", "required": ["package", "version"], "properties": {"package": {"type": "string"}, "version": {"type": "string"}}}}]}},
+      "annotations": {"jsonrpc": "JSON-RPC protocol version.", "id": "Correlates response to request 2.", "method": "Discovers server tools.", "params": "Empty filter object.", "result": "Tool discovery payload.", "tools": "Server-owned tools, not hard-coded by the agent.", "name": "Tool name used in tools/call.", "description": "Docstring prompt shown to the model.", "inputSchema": "Valid argument schema."}
+    },
+    {
+      "request": {"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {"name": "lookup_package_version", "arguments": {"package": "acme-sdk"}}},
+      "response": {"jsonrpc": "2.0", "id": 3, "result": {"content": [{"type": "text", "text": "{'package': 'acme-sdk', 'latest': '3.2.0', 'released': '2026-01-15', 'deprecated': {'2.0': 'Use the v3 migration guide and replace ClientV2 with Client.'}, 'source': 'internal package registry fixture'}"}]}},
+      "annotations": {"jsonrpc": "JSON-RPC protocol version.", "id": "Correlates response to request 3.", "method": "Invokes the discovered tool.", "params": "Tool name and arguments selected by the host model.", "name": "Exact proof server two was called.", "arguments": "Package selected for lookup.", "result": "Successful tool result.", "content": "Returned MCP content blocks.", "type": "Text content block.", "text": "Package version and release metadata."}
+    }
+  ],
+  "model_call_location": "The model call happens in the host after discovery/tool results; it does not happen in either MCP server."
+}

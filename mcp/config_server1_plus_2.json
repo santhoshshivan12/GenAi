@@ -1,0 +1,6 @@
+{
+  "mcpServers": [
+    {"name": "docs-search", "command": ["python", "-m", "mcp.docs_server"]},
+    {"name": "package-registry", "command": ["python", "-m", "mcp.package_registry_server"]}
+  ]
+}
